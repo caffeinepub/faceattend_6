@@ -95,19 +95,16 @@ persistent actor {
     };
   };
 
-  // Update a person (remove + re-add since replace is deprecated)
   func updatePersonEntry(id : Nat, updated : Person) {
     persons.remove(id);
     persons.add(id, updated);
   };
 
-  // Update an attendance record (remove + re-add)
   func updateAttendanceEntry(id : Nat, updated : AttendanceRecord) {
     attendanceRecords.remove(id);
     attendanceRecords.add(id, updated);
   };
 
-  // Register a new person with face descriptor
   public shared func registerPerson(
     personTypeStr : Text,
     studentId : Text,
@@ -133,7 +130,6 @@ persistent actor {
     id;
   };
 
-  // Get all persons (without face descriptors)
   public query func getAllPersons() : async [PersonSummary] {
     allPersonValues().map(func(p : Person) : PersonSummary {
       {
@@ -149,7 +145,6 @@ persistent actor {
     });
   };
 
-  // Get all face descriptors for matching
   public query func getAllFaceDescriptors() : async [DescriptorEntry] {
     allPersonValues().map(func(p : Person) : DescriptorEntry {
       {
@@ -161,12 +156,10 @@ persistent actor {
     });
   };
 
-  // Get single person with descriptor
   public query func getPerson(id : Nat) : async Person {
     getPerson_(id);
   };
 
-  // Get person summary
   public query func getPersonSummary(id : Nat) : async PersonSummary {
     let p = getPerson_(id);
     {
@@ -181,7 +174,6 @@ persistent actor {
     };
   };
 
-  // Update person details
   public shared func updatePerson(
     id : Nat,
     studentId : Text,
@@ -204,7 +196,22 @@ persistent actor {
     });
   };
 
-  // Delete person and their attendance records
+  // Update only the face descriptor for a person
+  public shared func updatePersonDescriptor(id : Nat, faceDescriptor : [Float]) : async () {
+    let p = getPerson_(id);
+    updatePersonEntry(id, {
+      id = p.id;
+      name = p.name;
+      personType = p.personType;
+      rollNo = p.rollNo;
+      batch = p.batch;
+      studentId = p.studentId;
+      employeeId = p.employeeId;
+      faceDescriptor;
+      createdAt = p.createdAt;
+    });
+  };
+
   public shared func deletePerson(id : Nat) : async () {
     switch (persons.get(id)) {
       case (null) Runtime.trap("Person not found");
@@ -219,7 +226,6 @@ persistent actor {
     };
   };
 
-  // Record attendance
   public shared func recordAttendance(
     personId : Nat,
     personTypeStr : Text,
@@ -253,7 +259,6 @@ persistent actor {
     id;
   };
 
-  // Get all attendance records sorted by timestamp desc
   public query func getAttendanceRecords() : async [AttendanceRecord] {
     allAttendanceValues().sort(
       func(a : AttendanceRecord, b : AttendanceRecord) : { #less; #equal; #greater } {
@@ -262,17 +267,14 @@ persistent actor {
     );
   };
 
-  // Filter by date
   public query func getAttendanceByDate(dateStr : Text) : async [AttendanceRecord] {
     allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr });
   };
 
-  // Filter by month
   public query func getAttendanceByMonth(monthStr : Text) : async [AttendanceRecord] {
     allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.monthStr == monthStr });
   };
 
-  // Update attendance record
   public shared func updateAttendanceRecord(
     id : Nat,
     name : Text,
@@ -302,12 +304,10 @@ persistent actor {
     });
   };
 
-  // Delete attendance record
   public shared func deleteAttendanceRecord(id : Nat) : async () {
     attendanceRecords.remove(id);
   };
 
-  // Check if person already attended a slot on a date
   public query func hasAttendedSlot(personId : Nat, slot : Text, dateStr : Text) : async Bool {
     allAttendanceValues().filter(
       func(r : AttendanceRecord) : Bool {
@@ -316,7 +316,6 @@ persistent actor {
     ).size() > 0;
   };
 
-  // Get stats
   public query func getStats() : async Stats {
     let arr = allAttendanceValues();
     var uniqueMonths : [Text] = [];
@@ -337,7 +336,6 @@ persistent actor {
     };
   };
 
-  // Get today's checkin count by date string
   public query func getTodayCheckins(dateStr : Text) : async Nat {
     allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr }).size();
   };

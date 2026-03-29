@@ -77,6 +77,7 @@ export const idlService = IDL.Service({
       [],
       [],
     ),
+  'updatePersonDescriptor' : IDL.Func([IDL.Nat, IDL.Vec(IDL.Float64)], [], []),
   'deletePerson' : IDL.Func([IDL.Nat], [], []),
   'recordAttendance' : IDL.Func(
       [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int, IDL.Int],
@@ -177,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'updatePersonDescriptor' : IDL.Func([IDL.Nat, IDL.Vec(IDL.Float64)], [], []),
     'deletePerson' : IDL.Func([IDL.Nat], [], []),
     'recordAttendance' : IDL.Func(
         [IDL.Nat, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Text, IDL.Text, IDL.Text, IDL.Int, IDL.Int, IDL.Int],

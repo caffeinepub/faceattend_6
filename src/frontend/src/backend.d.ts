@@ -55,6 +55,7 @@ export interface backendInterface {
     getPerson(id: bigint): Promise<Person>;
     getPersonSummary(id: bigint): Promise<PersonSummary>;
     updatePerson(id: bigint, studentId: string, employeeId: string, name: string, rollNo: string, batch: string): Promise<void>;
+    updatePersonDescriptor(id: bigint, faceDescriptor: Array<number>): Promise<void>;
     deletePerson(id: bigint): Promise<void>;
     recordAttendance(personId: bigint, personTypeStr: string, name: string, slot: string, timestamp: bigint, dateStr: string, monthStr: string, timeStr: string, year: bigint, month: bigint, day: bigint): Promise<bigint>;
     getAttendanceRecords(): Promise<Array<AttendanceRecord>>;

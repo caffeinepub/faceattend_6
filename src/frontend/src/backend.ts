@@ -146,6 +146,7 @@ export interface backendInterface {
     getPerson(id: bigint): Promise<Person>;
     getPersonSummary(id: bigint): Promise<PersonSummary>;
     updatePerson(id: bigint, studentId: string, employeeId: string, name: string, rollNo: string, batch: string): Promise<void>;
+    updatePersonDescriptor(id: bigint, faceDescriptor: Array<number>): Promise<void>;
     deletePerson(id: bigint): Promise<void>;
     recordAttendance(personId: bigint, personTypeStr: string, name: string, slot: string, timestamp: bigint, dateStr: string, monthStr: string, timeStr: string, year: bigint, month: bigint, day: bigint): Promise<bigint>;
     getAttendanceRecords(): Promise<Array<AttendanceRecord>>;
@@ -207,6 +208,9 @@ export class Backend implements backendInterface {
     }
     async updatePerson(arg0: bigint, arg1: string, arg2: string, arg3: string, arg4: string, arg5: string): Promise<void> {
         return this._call(() => this.actor.updatePerson(arg0, arg1, arg2, arg3, arg4, arg5));
+    }
+    async updatePersonDescriptor(arg0: bigint, arg1: Array<number>): Promise<void> {
+        return this._call(() => this.actor.updatePersonDescriptor(arg0, arg1));
     }
     async deletePerson(arg0: bigint): Promise<void> {
         return this._call(() => this.actor.deletePerson(arg0));

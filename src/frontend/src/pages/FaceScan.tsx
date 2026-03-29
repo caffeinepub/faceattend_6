@@ -56,6 +56,10 @@ function getCurrentSlot(): string {
   return slot ? slot.name : "General";
 }
 
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function FaceScan() {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -70,6 +74,7 @@ export default function FaceScan() {
   const faceApiRef = useRef<FaceApi | null>(null);
   const manualBtnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoManualTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modelsLoadedRef = useRef(false);
 
   const { actor } = useActor();
   const { data: descriptors = [] } = useGetAllFaceDescriptors();
@@ -125,12 +130,14 @@ export default function FaceScan() {
 
     // Auto-switch to manual mode after 12 seconds if models still haven't loaded
     autoManualTimerRef.current = setTimeout(() => {
-      setManualMode((prev) => {
-        if (!prev) {
-          toast.info("AI not available — switched to manual mode");
-        }
-        return true;
-      });
+      if (!modelsLoadedRef.current) {
+        setManualMode((prev) => {
+          if (!prev) {
+            toast.info("AI not available — switched to manual mode");
+          }
+          return true;
+        });
+      }
     }, 12000);
 
     return () => {
@@ -143,6 +150,7 @@ export default function FaceScan() {
   // Clear fallback timers once models load
   useEffect(() => {
     if (modelsLoaded) {
+      modelsLoadedRef.current = true;
       setShowManualBtn(false);
       setManualMode(false);
       if (manualBtnTimerRef.current) clearTimeout(manualBtnTimerRef.current);
@@ -212,7 +220,7 @@ export default function FaceScan() {
           setMatchResult(result);
 
           const slot = getCurrentSlot();
-          const dateStr = new Date().toISOString().split("T")[0];
+          const dateStr = toLocalDateStr(new Date());
           if (slot && actor) {
             const already = await actor.hasAttendedSlot(
               bestEntry.id,
@@ -244,7 +252,7 @@ export default function FaceScan() {
     const slot = getCurrentSlot();
 
     const now = new Date();
-    const dateStr = now.toISOString().split("T")[0];
+    const dateStr = toLocalDateStr(now);
     const monthStr = dateStr.slice(0, 7);
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const year = BigInt(now.getFullYear());
@@ -278,6 +286,7 @@ export default function FaceScan() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            personId: String(target.personId),
             name: target.name,
             personType: target.personTypeStr,
             slot,
@@ -563,6 +572,12 @@ export default function FaceScan() {
               </div>
             );
           })}
+          {slot === "General" && (
+            <div className="rounded-lg p-2 text-center text-xs border transition-all bg-primary/20 border-primary/40 text-primary font-semibold col-span-4">
+              <div>General</div>
+              <div>Outside regular hours</div>
+            </div>
+          )}
         </div>
 
         {/* Manual mode: person list */}

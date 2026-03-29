@@ -777,8 +777,8 @@ export default function Dashboard() {
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This will remove the person and their face data. Attendance records
-            will remain.
+            This will permanently delete the person, their face data, and ALL
+            their attendance records. This cannot be undone.
           </p>
           <DialogFooter>
             <Button

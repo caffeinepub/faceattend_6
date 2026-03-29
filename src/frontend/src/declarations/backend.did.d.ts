@@ -68,6 +68,7 @@ export interface _SERVICE {
   'getPerson' : ActorMethod<[bigint], Person>,
   'getPersonSummary' : ActorMethod<[bigint], PersonSummary>,
   'updatePerson' : ActorMethod<[bigint, string, string, string, string, string], undefined>,
+  'updatePersonDescriptor' : ActorMethod<[bigint, Array<number>], undefined>,
   'deletePerson' : ActorMethod<[bigint], undefined>,
   'recordAttendance' : ActorMethod<[bigint, string, string, string, bigint, string, string, string, bigint, bigint, bigint], bigint>,
   'getAttendanceRecords' : ActorMethod<[], Array<AttendanceRecord>>,

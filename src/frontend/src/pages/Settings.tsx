@@ -125,9 +125,15 @@ export default function Settings() {
 
   const handleSave = () => {
     const settings = buildSettings();
-    saveSettings(settings);
-    applySettings(settings);
-    toast.success("Settings saved!");
+    try {
+      saveSettings(settings);
+      applySettings(settings);
+      toast.success("Settings saved!");
+    } catch (_e) {
+      toast.error(
+        "Could not save — background image may be too large. Try a smaller image.",
+      );
+    }
   };
 
   return (

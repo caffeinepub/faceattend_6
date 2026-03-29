@@ -43,6 +43,9 @@ export function useGetAttendanceRecords() {
       return actor.getAttendanceRecords();
     },
     enabled: !!actor && !isFetching,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 }
 
@@ -219,6 +222,21 @@ export function useDeletePerson() {
       qc.invalidateQueries({ queryKey: ["persons"] });
       qc.invalidateQueries({ queryKey: ["descriptors"] });
       qc.invalidateQueries({ queryKey: ["stats"] });
+      qc.invalidateQueries({ queryKey: ["attendance"] });
+    },
+  });
+}
+
+export function useUpdatePersonDescriptor() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { id: bigint; faceDescriptor: number[] }) => {
+      if (!actor) throw new Error("Not connected");
+      return actor.updatePersonDescriptor(params.id, params.faceDescriptor);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["descriptors"] });
     },
   });
 }

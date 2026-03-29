@@ -78,7 +78,7 @@ export default function Register() {
   const _processCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const loadModels = async () => {
-    if (modelsLoaded) return;
+    if (modelsLoaded || loadingModels) return;
     setLoadingModels(true);
     try {
       const fa = await getFaceApi();
@@ -106,6 +106,14 @@ export default function Register() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     handleStartCamera();
+  }, []);
+
+  // Stop camera on unmount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: stopCamera is a stable ref
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
   }, []);
 
   /** Capture with AI face detection */
