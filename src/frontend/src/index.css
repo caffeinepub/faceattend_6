@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/assets/fonts/JetBrainsMono.woff2") format("woff2");
+  font-weight: 300 700;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+    --background: 0.13 0.025 255;
+    --foreground: 0.95 0.01 255;
+    --card: 0.17 0.03 255;
+    --card-foreground: 0.95 0.01 255;
+    --popover: 0.19 0.035 255;
+    --popover-foreground: 0.95 0.01 255;
+    --primary: 0.58 0.2 250;
+    --primary-foreground: 0.98 0 0;
+    --secondary: 0.22 0.04 255;
+    --secondary-foreground: 0.95 0.01 255;
+    --muted: 0.22 0.04 255;
+    --muted-foreground: 0.6 0.04 255;
+    --accent: 0.25 0.05 255;
+    --accent-foreground: 0.95 0.01 255;
+    --destructive: 0.6 0.22 15;
+    --destructive-foreground: 0.98 0 0;
+    --border: 0.28 0.04 255;
+    --input: 0.28 0.04 255;
+    --ring: 0.58 0.2 250;
+    --success: 0.65 0.18 142;
+    --warning: 0.72 0.15 70;
+    --chart-1: 0.58 0.2 250;
+    --chart-2: 0.65 0.18 142;
+    --chart-3: 0.72 0.15 70;
+    --chart-4: 0.6 0.22 15;
+    --chart-5: 0.7 0.18 300;
+    --sidebar: 0.15 0.028 255;
+    --sidebar-foreground: 0.95 0.01 255;
+    --sidebar-primary: 0.58 0.2 250;
+    --sidebar-primary-foreground: 0.98 0 0;
+    --sidebar-accent: 0.22 0.04 255;
+    --sidebar-accent-foreground: 0.95 0.01 255;
+    --sidebar-border: 0.28 0.04 255;
+    --sidebar-ring: 0.58 0.2 250;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Bricolage Grotesque", "General Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Camera corner brackets */
+.camera-bracket::before,
+.camera-bracket::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: oklch(0.58 0.2 250);
+  border-style: solid;
+}
+
+.corner-tl::before {
+  top: 0;
+  left: 0;
+  border-width: 3px 0 0 3px;
+}
+.corner-tr::after {
+  top: 0;
+  right: 0;
+  border-width: 3px 3px 0 0;
+}
+.corner-bl::before {
+  bottom: 0;
+  left: 0;
+  border-width: 0 0 3px 3px;
+}
+.corner-br::after {
+  bottom: 0;
+  right: 0;
+  border-width: 0 3px 3px 0;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Scan line animation */
+@keyframes scan-line {
+  0% {
+    transform: translateY(0%);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+}
+.scan-line {
+  animation: scan-line 2.5s linear infinite;
+}
