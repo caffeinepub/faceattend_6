@@ -9,6 +9,7 @@ import {
 import Navbar from "./components/Navbar";
 import { applySettings, loadSettings } from "./hooks/useSettings";
 import Dashboard from "./pages/Dashboard";
+import Documentation from "./pages/Documentation";
 import FaceScan from "./pages/FaceScan";
 import Register from "./pages/Register";
 import Report from "./pages/Report";
@@ -24,7 +25,7 @@ const rootRoute = createRootRoute({
       <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border">
+      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border print:hidden">
         <div>Developed by Atoto venyo</div>
       </footer>
       <Toaster />
@@ -57,6 +58,11 @@ const reportRoute = createRoute({
   path: "/report",
   component: Report,
 });
+const docsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/docs",
+  component: Documentation,
+});
 
 const routeTree = rootRoute.addChildren([
   scanRoute,
@@ -64,6 +70,7 @@ const routeTree = rootRoute.addChildren([
   settingsRoute,
   dashboardRoute,
   reportRoute,
+  docsRoute,
 ]);
 
 const router = createRouter({ routeTree });

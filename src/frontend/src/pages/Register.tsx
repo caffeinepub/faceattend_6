@@ -267,146 +267,8 @@ export default function Register() {
           )}
         </div>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as PersonTab)}>
-          <TabsList
-            className="w-full mb-6 bg-card border border-border"
-            data-ocid="register.tab"
-          >
-            <TabsTrigger
-              value="student"
-              className="flex-1"
-              data-ocid="register.student.tab"
-            >
-              Student
-            </TabsTrigger>
-            <TabsTrigger
-              value="employee"
-              className="flex-1"
-              data-ocid="register.employee.tab"
-            >
-              Employee
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="student" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="studentId">
-                  Student ID{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="studentId"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  placeholder="e.g. STU-2024-001"
-                  className="bg-card border-border"
-                  data-ocid="register.student_id.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="studentName">
-                  Full Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="studentName"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="e.g. Aisha Sharma"
-                  className="bg-card border-border"
-                  data-ocid="register.name.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="rollNo">
-                  Roll No{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="rollNo"
-                  value={rollNo}
-                  onChange={(e) => setRollNo(e.target.value)}
-                  placeholder="e.g. 42"
-                  className="bg-card border-border"
-                  data-ocid="register.roll_no.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="batch">
-                  Batch{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="batch"
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  placeholder="e.g. 2024-B"
-                  className="bg-card border-border"
-                  data-ocid="register.batch.input"
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="employee" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5 col-span-2">
-                <Label htmlFor="employeeName">
-                  Full Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="employeeName"
-                  value={employeeName}
-                  onChange={(e) => setEmployeeName(e.target.value)}
-                  placeholder="e.g. Rahul Verma"
-                  className="bg-card border-border"
-                  data-ocid="register.employee_name.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="employeeId">
-                  Employee ID{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="employeeId"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  placeholder="e.g. EMP-2024-007"
-                  className="bg-card border-border"
-                  data-ocid="register.employee_id.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="empBatch">
-                  Batch{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="empBatch"
-                  value={empBatch}
-                  onChange={(e) => setEmpBatch(e.target.value)}
-                  placeholder="e.g. HR-2024"
-                  className="bg-card border-border"
-                  data-ocid="register.emp_batch.input"
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
         {/* Camera Section */}
-        <div className="mt-6 rounded-xl border border-border bg-card overflow-hidden">
+        <div className="mb-6 rounded-xl border border-border bg-card overflow-hidden">
           <div className="p-4 border-b border-border flex items-center gap-2">
             <Camera className="w-4 h-4 text-primary" />
             <span className="font-semibold text-sm">Face Photo</span>
@@ -572,6 +434,144 @@ export default function Register() {
             )}
           </div>
         </div>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as PersonTab)}>
+          <TabsList
+            className="w-full mb-6 bg-card border border-border"
+            data-ocid="register.tab"
+          >
+            <TabsTrigger
+              value="student"
+              className="flex-1"
+              data-ocid="register.student.tab"
+            >
+              Student
+            </TabsTrigger>
+            <TabsTrigger
+              value="employee"
+              className="flex-1"
+              data-ocid="register.employee.tab"
+            >
+              Employee
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="student" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="studentId">
+                  Student ID{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="studentId"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  placeholder="e.g. STU-2024-001"
+                  className="bg-card border-border"
+                  data-ocid="register.student_id.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="studentName">
+                  Full Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="studentName"
+                  value={studentName}
+                  onChange={(e) => setStudentName(e.target.value)}
+                  placeholder="e.g. Aisha Sharma"
+                  className="bg-card border-border"
+                  data-ocid="register.name.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="rollNo">
+                  Roll No{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="rollNo"
+                  value={rollNo}
+                  onChange={(e) => setRollNo(e.target.value)}
+                  placeholder="e.g. 42"
+                  className="bg-card border-border"
+                  data-ocid="register.roll_no.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="batch">
+                  Batch{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="batch"
+                  value={batch}
+                  onChange={(e) => setBatch(e.target.value)}
+                  placeholder="e.g. 2024-B"
+                  className="bg-card border-border"
+                  data-ocid="register.batch.input"
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="employee" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 col-span-2">
+                <Label htmlFor="employeeName">
+                  Full Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="employeeName"
+                  value={employeeName}
+                  onChange={(e) => setEmployeeName(e.target.value)}
+                  placeholder="e.g. Rahul Verma"
+                  className="bg-card border-border"
+                  data-ocid="register.employee_name.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="employeeId">
+                  Employee ID{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="employeeId"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  placeholder="e.g. EMP-2024-007"
+                  className="bg-card border-border"
+                  data-ocid="register.employee_id.input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="empBatch">
+                  Batch{" "}
+                  <span className="text-muted-foreground text-xs">
+                    (optional)
+                  </span>
+                </Label>
+                <Input
+                  id="empBatch"
+                  value={empBatch}
+                  onChange={(e) => setEmpBatch(e.target.value)}
+                  placeholder="e.g. HR-2024"
+                  className="bg-card border-border"
+                  data-ocid="register.emp_batch.input"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <Button
           className="w-full mt-6 h-12 text-base font-semibold bg-primary hover:bg-primary/90"
