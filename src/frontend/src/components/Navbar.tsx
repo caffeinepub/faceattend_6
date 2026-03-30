@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  BookOpen,
   FileText,
   LayoutDashboard,
   ScanFace,
@@ -14,7 +13,6 @@ const navItems = [
   { to: "/report", icon: FileText, label: "Report" },
   { to: "/settings", icon: Settings, label: "Settings" },
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/docs", icon: BookOpen, label: "Docs" },
 ] as const;
 
 export default function Navbar() {
