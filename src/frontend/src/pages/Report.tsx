@@ -588,12 +588,37 @@ function ManagePersons() {
 }
 
 // ─────────────────────────────────────────────
+// Helper: format date as DD/MM/YYYY (DayName)
+// ─────────────────────────────────────────────
+function formatDateDisplay(day: bigint, month: bigint, year: bigint): string {
+  const d = Number(day);
+  const m = Number(month);
+  const y = Number(year);
+  const dd = String(d).padStart(2, "0");
+  const mm = String(m).padStart(2, "0");
+  const dayName = new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+  return `${dd}/${mm}/${y} (${dayName})`;
+}
+
+// ─────────────────────────────────────────────
 // Main Report Page
 // ─────────────────────────────────────────────
 export default function Report() {
   const { data: records = [], isLoading } = useGetAttendanceRecords();
+  const { data: persons = [] } = useGetAllPersons();
   const [dateFilter, setDateFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
+
+  // Build personId -> batch map
+  const personBatchMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of persons) {
+      map.set(p.id.toString(), p.batch || "");
+    }
+    return map;
+  }, [persons]);
 
   const filtered = useMemo(() => {
     let list = [...records].sort((a, b) => Number(b.timestamp - a.timestamp));
@@ -616,25 +641,25 @@ export default function Report() {
     const header = [
       "Name",
       "Type",
+      "NSQF Level / Semester",
       "Entry Time",
       "Date",
-      "Month",
-      "Year",
       "Slot",
     ];
-    const rows = filtered.map((r) => [
-      r.name,
-      "personType" in r
-        ? (r.personType as any).student !== undefined
-          ? "Student"
-          : "Employee"
-        : "",
-      r.timeStr,
-      r.dateStr,
-      r.monthStr,
-      String(r.year),
-      r.slot,
-    ]);
+    const rows = filtered.map((r) => {
+      const isStudent = (r.personType as any).student !== undefined;
+      const batchVal = personBatchMap.get(r.personId.toString()) || "";
+      const nsqfLevel = isStudent && batchVal ? batchVal : "—";
+      const dateDisplay = formatDateDisplay(r.day, r.month, r.year);
+      return [
+        r.name,
+        isStudent ? "Student" : "Employee",
+        nsqfLevel,
+        r.timeStr,
+        dateDisplay,
+        r.slot,
+      ];
+    });
     const csv = [header, ...rows]
       .map((row) =>
         row.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","),
@@ -779,16 +804,13 @@ export default function Report() {
                         Type
                       </th>
                       <th className="px-4 py-3 text-left font-semibold text-foreground">
+                        NSQF Level / Semester
+                      </th>
+                      <th className="px-4 py-3 text-left font-semibold text-foreground">
                         Entry Time
                       </th>
                       <th className="px-4 py-3 text-left font-semibold text-foreground">
                         Date
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">
-                        Month
-                      </th>
-                      <th className="px-4 py-3 text-left font-semibold text-foreground">
-                        Year
                       </th>
                       <th className="px-4 py-3 text-left font-semibold text-foreground">
                         Slot
@@ -799,6 +821,14 @@ export default function Report() {
                     {filtered.map((r, i) => {
                       const isStudent =
                         (r.personType as any).student !== undefined;
+                      const batchVal =
+                        personBatchMap.get(r.personId.toString()) || "";
+                      const nsqfLevel = isStudent && batchVal ? batchVal : "—";
+                      const dateDisplay = formatDateDisplay(
+                        r.day,
+                        r.month,
+                        r.year,
+                      );
                       return (
                         <tr
                           key={String(r.id)}
@@ -822,17 +852,14 @@ export default function Report() {
                               {isStudent ? "Student" : "Employee"}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {nsqfLevel}
+                          </td>
                           <td className="px-4 py-3 text-foreground font-mono">
                             {r.timeStr}
                           </td>
-                          <td className="px-4 py-3 text-foreground">
-                            {r.dateStr}
-                          </td>
-                          <td className="px-4 py-3 text-foreground">
-                            {r.monthStr}
-                          </td>
-                          <td className="px-4 py-3 text-foreground">
-                            {String(r.year)}
+                          <td className="px-4 py-3 text-foreground whitespace-nowrap">
+                            {dateDisplay}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {r.slot}

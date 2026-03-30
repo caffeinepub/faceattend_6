@@ -2,6 +2,13 @@ import { useCamera } from "@/camera/useCamera";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
@@ -32,6 +39,12 @@ function sanitiseDescriptor(desc: number[]): number[] {
   return desc.map((v) => (Number.isFinite(v) ? v : 0));
 }
 
+const NSQF_SEMESTERS: Record<string, string[]> = {
+  "NSQF Level-III": ["1st Semester", "2nd Semester"],
+  "NSQF Level-IV": ["1st Semester", "2nd Semester"],
+  "NSQF Level-V": ["1st Semester"],
+};
+
 export default function Register() {
   const [tab, setTab] = useState<PersonTab>("student");
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -48,7 +61,8 @@ export default function Register() {
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [rollNo, setRollNo] = useState("");
-  const [batch, setBatch] = useState("");
+  const [nsqfLevel, setNsqfLevel] = useState("");
+  const [semester, setSemester] = useState("");
 
   // Employee fields
   const [employeeName, setEmployeeName] = useState("");
@@ -211,6 +225,15 @@ export default function Register() {
       return;
     }
 
+    const batchValue =
+      tab === "student"
+        ? nsqfLevel
+          ? semester
+            ? `${nsqfLevel} - ${semester}`
+            : nsqfLevel
+          : ""
+        : empBatch.trim();
+
     try {
       await registerMutation.mutateAsync({
         personTypeStr: tab,
@@ -218,7 +241,7 @@ export default function Register() {
         employeeId: tab === "employee" ? employeeId.trim() : "",
         name,
         rollNo: tab === "student" ? rollNo.trim() : "",
-        batch: tab === "student" ? batch.trim() : empBatch.trim(),
+        batch: batchValue,
         faceDescriptor: sanitiseDescriptor(captureState.descriptor),
       });
 
@@ -226,7 +249,8 @@ export default function Register() {
       setStudentId("");
       setStudentName("");
       setRollNo("");
-      setBatch("");
+      setNsqfLevel("");
+      setSemester("");
       setEmployeeName("");
       setEmployeeId("");
       setEmpBatch("");
@@ -504,21 +528,59 @@ export default function Register() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="batch">
-                  Batch{" "}
+                <Label>
+                  NSQF Level{" "}
                   <span className="text-muted-foreground text-xs">
                     (optional)
                   </span>
                 </Label>
-                <Input
-                  id="batch"
-                  value={batch}
-                  onChange={(e) => setBatch(e.target.value)}
-                  placeholder="e.g. 2024-B"
-                  className="bg-card border-border"
-                  data-ocid="register.batch.input"
-                />
+                <Select
+                  value={nsqfLevel}
+                  onValueChange={(val) => {
+                    setNsqfLevel(val);
+                    setSemester("");
+                  }}
+                >
+                  <SelectTrigger
+                    className="bg-card border-border"
+                    data-ocid="register.nsqf_level.select"
+                  >
+                    <SelectValue placeholder="Select NSQF Level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NSQF Level-III">
+                      NSQF Level-III
+                    </SelectItem>
+                    <SelectItem value="NSQF Level-IV">NSQF Level-IV</SelectItem>
+                    <SelectItem value="NSQF Level-V">NSQF Level-V</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              {nsqfLevel && (
+                <div className="space-y-1.5">
+                  <Label>
+                    Semester{" "}
+                    <span className="text-muted-foreground text-xs">
+                      (optional)
+                    </span>
+                  </Label>
+                  <Select value={semester} onValueChange={setSemester}>
+                    <SelectTrigger
+                      className="bg-card border-border"
+                      data-ocid="register.semester.select"
+                    >
+                      <SelectValue placeholder="Select Semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(NSQF_SEMESTERS[nsqfLevel] ?? []).map((sem) => (
+                        <SelectItem key={sem} value={sem}>
+                          {sem}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </TabsContent>
 
