@@ -279,22 +279,24 @@ export default function FaceScan() {
         day,
       });
 
-      // Fire-and-forget webhook POST
+      // Fire-and-forget webhook POST (no-cors to avoid preflight blocking)
       const { webhookUrl } = loadSettings();
       if (webhookUrl) {
+        const payload = new URLSearchParams({
+          personId: String(target.personId),
+          name: target.name,
+          personType: target.personTypeStr,
+          slot,
+          date: dateStr,
+          month: monthStr,
+          time: timeStr,
+          year: String(now.getFullYear()),
+        });
         fetch(webhookUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            personId: String(target.personId),
-            name: target.name,
-            personType: target.personTypeStr,
-            slot,
-            date: dateStr,
-            month: monthStr,
-            time: timeStr,
-            year: now.getFullYear(),
-          }),
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: payload.toString(),
         }).catch(() => {});
       }
 
