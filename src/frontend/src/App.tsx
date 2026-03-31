@@ -11,7 +11,6 @@ import { applySettings, loadSettings } from "./hooks/useSettings";
 import Dashboard from "./pages/Dashboard";
 import FaceScan from "./pages/FaceScan";
 import Register from "./pages/Register";
-import Report from "./pages/Report";
 import Settings from "./pages/Settings";
 
 // Apply saved settings on startup
@@ -52,18 +51,12 @@ const dashboardRoute = createRoute({
   path: "/dashboard",
   component: Dashboard,
 });
-const reportRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/report",
-  component: Report,
-});
 
 const routeTree = rootRoute.addChildren([
   scanRoute,
   registerRoute,
   settingsRoute,
   dashboardRoute,
-  reportRoute,
 ]);
 
 const router = createRouter({ routeTree });

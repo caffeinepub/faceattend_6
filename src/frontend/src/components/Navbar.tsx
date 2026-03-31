@@ -1,18 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  FileText,
-  LayoutDashboard,
-  ScanFace,
-  Settings,
-  UserPlus,
-} from "lucide-react";
+import { LayoutDashboard, ScanFace, Settings, UserPlus } from "lucide-react";
 
 const navItems = [
   { to: "/", icon: ScanFace, label: "Face Scan" },
   { to: "/register", icon: UserPlus, label: "Register" },
-  { to: "/report", icon: FileText, label: "Report" },
-  { to: "/settings", icon: Settings, label: "Settings" },
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/settings", icon: Settings, label: "Settings" },
 ] as const;
 
 export default function Navbar() {
