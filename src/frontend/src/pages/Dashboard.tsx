@@ -319,16 +319,18 @@ function EditPersonDialog({
               />
             </div>
           )}
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-batch">Batch</Label>
-            <Input
-              id="edit-batch"
-              value={batch}
-              onChange={(e) => setBatch(e.target.value)}
-              placeholder="Optional"
-              data-ocid="dashboard.edit_batch.input"
-            />
-          </div>
+          {isStudent && (
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-batch">NSQF Level / Semester</Label>
+              <Input
+                id="edit-batch"
+                value={batch}
+                onChange={(e) => setBatch(e.target.value)}
+                placeholder="e.g. NSQF Level-III - 1st Semester"
+                data-ocid="dashboard.edit_batch.input"
+              />
+            </div>
+          )}
           <div className="border border-border rounded-lg p-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-foreground">
