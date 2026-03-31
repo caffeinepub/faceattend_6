@@ -47,7 +47,7 @@ import {
   Users,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   useDeleteAttendance,
@@ -653,6 +653,12 @@ export default function Dashboard() {
     useGetAttendanceRecords();
   const { data: persons = [] } = useGetAllPersons();
 
+  const personBatchMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of persons) map.set(p.id.toString(), p.batch || "");
+    return map;
+  }, [persons]);
+
   const updateAttendance = useUpdateAttendance();
   const deleteAttendance = useDeleteAttendance();
 
@@ -852,6 +858,19 @@ export default function Dashboard() {
                 Clear
               </Button>
             )}
+            <div className="ml-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadCSV}
+                disabled={attendance.length === 0}
+                className="flex items-center gap-2 h-8"
+                data-ocid="dashboard.csv_download.button"
+              >
+                <Download className="w-4 h-4" />
+                Download CSV
+              </Button>
+            </div>
           </div>
 
           {attLoading ? (
@@ -889,6 +908,9 @@ export default function Dashboard() {
                       Type
                     </TableHead>
                     <TableHead className="text-muted-foreground">
+                      NSQF / Semester
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
                       Slot
                     </TableHead>
                     <TableHead className="text-muted-foreground">
@@ -924,6 +946,11 @@ export default function Dashboard() {
                         >
                           {"student" in r.personType ? "Student" : "Employee"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {"student" in r.personType
+                          ? personBatchMap.get(r.personId.toString()) || "—"
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-sm">{r.slot}</TableCell>
                       <TableCell className="font-mono text-sm">
@@ -963,20 +990,6 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="people">
-          {/* CSV Download button */}
-          <div className="flex justify-end mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={downloadCSV}
-              disabled={attendance.length === 0}
-              className="flex items-center gap-2"
-              data-ocid="dashboard.csv_download.button"
-            >
-              <Download className="w-4 h-4" />
-              Download CSV
-            </Button>
-          </div>
           <ManagePersons />
         </TabsContent>
       </Tabs>

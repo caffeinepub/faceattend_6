@@ -67,7 +67,6 @@ export default function Register() {
   // Employee fields
   const [employeeName, setEmployeeName] = useState("");
   const [employeeId, setEmployeeId] = useState("");
-  const [empBatch, setEmpBatch] = useState("");
 
   const { actor, isFetching: actorLoading } = useActor();
   const registerMutation = useRegisterPerson();
@@ -232,7 +231,7 @@ export default function Register() {
             ? `${nsqfLevel} - ${semester}`
             : nsqfLevel
           : ""
-        : empBatch.trim();
+        : "";
 
     try {
       await registerMutation.mutateAsync({
@@ -253,7 +252,6 @@ export default function Register() {
       setSemester("");
       setEmployeeName("");
       setEmployeeId("");
-      setEmpBatch("");
       setCaptureState({ preview: null, descriptor: null, error: null });
       // Restart camera for next registration
       startCamera();
@@ -613,22 +611,6 @@ export default function Register() {
                   placeholder="e.g. EMP-2024-007"
                   className="bg-card border-border"
                   data-ocid="register.employee_id.input"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="empBatch">
-                  Batch{" "}
-                  <span className="text-muted-foreground text-xs">
-                    (optional)
-                  </span>
-                </Label>
-                <Input
-                  id="empBatch"
-                  value={empBatch}
-                  onChange={(e) => setEmpBatch(e.target.value)}
-                  placeholder="e.g. HR-2024"
-                  className="bg-card border-border"
-                  data-ocid="register.emp_batch.input"
                 />
               </div>
             </div>
