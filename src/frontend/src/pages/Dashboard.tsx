@@ -947,7 +947,7 @@ export default function Dashboard() {
                           {"student" in r.personType ? "Student" : "Employee"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="text-sm text-foreground">
                         {"student" in r.personType
                           ? personBatchMap.get(r.personId.toString()) || "—"
                           : "—"}
