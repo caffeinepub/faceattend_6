@@ -19,18 +19,27 @@ export interface AttendanceRecord {
   'slot' : string,
   'year' : bigint,
   'monthStr' : string,
-  'personType' : PersonType,
+  'personType' : { 'employee' : null } |
+    { 'student' : null },
   'personId' : bigint,
-  'timestamp' : Time,
+  'timestamp' : bigint,
   'editedAt' : [] | [Time],
   'timeStr' : string,
+}
+export interface DescriptorEntry {
+  'id' : bigint,
+  'name' : string,
+  'personType' : { 'employee' : null } |
+    { 'student' : null },
+  'faceDescriptor' : Array<number>,
 }
 export interface Person {
   'id' : bigint,
   'studentId' : string,
   'name' : string,
   'createdAt' : Time,
-  'personType' : PersonType,
+  'personType' : { 'employee' : null } |
+    { 'student' : null },
   'employeeId' : string,
   'faceDescriptor' : Array<number>,
   'batch' : string,
@@ -41,19 +50,12 @@ export interface PersonSummary {
   'studentId' : string,
   'name' : string,
   'createdAt' : Time,
-  'personType' : PersonType,
+  'personType' : { 'employee' : null } |
+    { 'student' : null },
   'employeeId' : string,
   'batch' : string,
   'rollNo' : string,
 }
-export interface DescriptorEntry {
-  'id' : bigint,
-  'personType' : PersonType,
-  'name' : string,
-  'faceDescriptor' : Array<number>,
-}
-export type PersonType = { 'employee' : null } |
-  { 'student' : null };
 export interface Stats {
   'activeMonths' : Array<string>,
   'totalPersons' : bigint,
@@ -62,23 +64,47 @@ export interface Stats {
 }
 export type Time = bigint;
 export interface _SERVICE {
-  'registerPerson' : ActorMethod<[string, string, string, string, string, string, Array<number>], bigint>,
-  'getAllPersons' : ActorMethod<[], Array<PersonSummary>>,
-  'getAllFaceDescriptors' : ActorMethod<[], Array<DescriptorEntry>>,
-  'getPerson' : ActorMethod<[bigint], Person>,
-  'getPersonSummary' : ActorMethod<[bigint], PersonSummary>,
-  'updatePerson' : ActorMethod<[bigint, string, string, string, string, string], undefined>,
-  'updatePersonDescriptor' : ActorMethod<[bigint, Array<number>], undefined>,
+  'deleteAttendanceRecord' : ActorMethod<[bigint], undefined>,
   'deletePerson' : ActorMethod<[bigint], undefined>,
-  'recordAttendance' : ActorMethod<[bigint, string, string, string, bigint, string, string, string, bigint, bigint, bigint], bigint>,
-  'getAttendanceRecords' : ActorMethod<[], Array<AttendanceRecord>>,
+  'getAllFaceDescriptors' : ActorMethod<[], Array<DescriptorEntry>>,
+  'getAllPersons' : ActorMethod<[], Array<PersonSummary>>,
   'getAttendanceByDate' : ActorMethod<[string], Array<AttendanceRecord>>,
   'getAttendanceByMonth' : ActorMethod<[string], Array<AttendanceRecord>>,
-  'updateAttendanceRecord' : ActorMethod<[bigint, string, string, string, string, string], undefined>,
-  'deleteAttendanceRecord' : ActorMethod<[bigint], undefined>,
-  'hasAttendedSlot' : ActorMethod<[bigint, string, string], boolean>,
+  'getAttendanceRecords' : ActorMethod<[], Array<AttendanceRecord>>,
+  'getPerson' : ActorMethod<[bigint], Person>,
+  'getPersonSummary' : ActorMethod<[bigint], PersonSummary>,
   'getStats' : ActorMethod<[], Stats>,
   'getTodayCheckins' : ActorMethod<[string], bigint>,
+  'hasAttendedSlot' : ActorMethod<[bigint, string, string], boolean>,
+  'recordAttendance' : ActorMethod<
+    [
+      bigint,
+      string,
+      string,
+      string,
+      bigint,
+      string,
+      string,
+      string,
+      bigint,
+      bigint,
+      bigint,
+    ],
+    bigint
+  >,
+  'registerPerson' : ActorMethod<
+    [string, string, string, string, string, string, Array<number>],
+    bigint
+  >,
+  'updateAttendanceRecord' : ActorMethod<
+    [bigint, string, string, string, string, string],
+    undefined
+  >,
+  'updatePerson' : ActorMethod<
+    [bigint, string, string, string, string, string],
+    undefined
+  >,
+  'updatePersonDescriptor' : ActorMethod<[bigint, Array<number>], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

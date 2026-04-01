@@ -209,7 +209,7 @@ export default function FaceScan() {
 
         if (bestDist < 0.6 && bestEntry) {
           const typeStr =
-            "student" in bestEntry.personType ? "student" : "employee";
+            bestEntry.personType === "student" ? "student" : "employee";
           const result: MatchResult = {
             personId: bestEntry.id,
             name: bestEntry.name,
@@ -312,7 +312,7 @@ export default function FaceScan() {
   };
 
   const handleManualMark = async (person: PersonSummary) => {
-    const typeStr = "student" in person.personType ? "student" : "employee";
+    const typeStr = person.personType === "student" ? "student" : "employee";
     const fakeMatch: MatchResult = {
       personId: person.id,
       name: person.name,
@@ -602,7 +602,7 @@ export default function FaceScan() {
               </div>
             ) : (
               persons.map((person, idx) => {
-                const isStudent = "student" in person.personType;
+                const isStudent = person.personType === "student";
                 return (
                   <div
                     key={String(person.id)}

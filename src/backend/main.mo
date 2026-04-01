@@ -1,16 +1,13 @@
 import Array "mo:core/Array";
-import Text "mo:core/Text";
-import Int "mo:core/Int";
-import Nat "mo:core/Nat";
 import Map "mo:core/Map";
+import Int "mo:core/Int";
 import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
+import Migration "migration";
 
+(with migration = Migration.run)
 persistent actor {
-  type PersonType = {
-    #student;
-    #employee;
-  };
+  type PersonType = { #student; #employee };
 
   type Person = {
     id : Nat;
@@ -22,22 +19,6 @@ persistent actor {
     employeeId : Text;
     faceDescriptor : [Float];
     createdAt : Time.Time;
-  };
-
-  type AttendanceRecord = {
-    id : Nat;
-    personId : Nat;
-    name : Text;
-    personType : PersonType;
-    slot : Text;
-    timestamp : Time.Time;
-    dateStr : Text;
-    monthStr : Text;
-    timeStr : Text;
-    year : Int;
-    month : Int;
-    day : Int;
-    editedAt : ?Time.Time;
   };
 
   type PersonSummary = {
@@ -58,6 +39,22 @@ persistent actor {
     faceDescriptor : [Float];
   };
 
+  type AttendanceRecord = {
+    id : Nat;
+    personId : Nat;
+    name : Text;
+    personType : PersonType;
+    slot : Text;
+    timestamp : Int;
+    dateStr : Text;
+    monthStr : Text;
+    timeStr : Text;
+    year : Int;
+    month : Int;
+    day : Int;
+    editedAt : ?Time.Time;
+  };
+
   type Stats = {
     totalPersons : Nat;
     totalAttendance : Nat;
@@ -65,44 +62,17 @@ persistent actor {
     activeMonths : [Text];
   };
 
+  var persons : Map.Map<Nat, Person> = Map.empty<Nat, Person>();
+  var attendance : Map.Map<Nat, AttendanceRecord> = Map.empty<Nat, AttendanceRecord>();
   var personIdCounter : Nat = 0;
   var attendanceIdCounter : Nat = 0;
-  let persons = Map.empty<Nat, Person>();
-  let attendanceRecords = Map.empty<Nat, AttendanceRecord>();
 
-  func nextPersonId() : Nat {
-    personIdCounter += 1;
-    personIdCounter;
-  };
-
-  func nextAttendanceId() : Nat {
-    attendanceIdCounter += 1;
-    attendanceIdCounter;
-  };
-
-  func allPersonValues() : [Person] {
+  func allPersons() : [Person] {
     persons.toArray().map(func(kv : (Nat, Person)) : Person { kv.1 });
   };
 
-  func allAttendanceValues() : [AttendanceRecord] {
-    attendanceRecords.toArray().map(func(kv : (Nat, AttendanceRecord)) : AttendanceRecord { kv.1 });
-  };
-
-  func getPerson_(id : Nat) : Person {
-    switch (persons.get(id)) {
-      case (null) Runtime.trap("Person not found");
-      case (?p) p;
-    };
-  };
-
-  func updatePersonEntry(id : Nat, updated : Person) {
-    persons.remove(id);
-    persons.add(id, updated);
-  };
-
-  func updateAttendanceEntry(id : Nat, updated : AttendanceRecord) {
-    attendanceRecords.remove(id);
-    attendanceRecords.add(id, updated);
+  func allAttendance() : [AttendanceRecord] {
+    attendance.toArray().map(func(kv : (Nat, AttendanceRecord)) : AttendanceRecord { kv.1 });
   };
 
   public shared func registerPerson(
@@ -115,101 +85,79 @@ persistent actor {
     faceDescriptor : [Float]
   ) : async Nat {
     let pt : PersonType = if (personTypeStr == "student") #student else #employee;
-    let id = nextPersonId();
+    personIdCounter += 1;
+    let id = personIdCounter;
     persons.add(id, {
-      id;
-      name;
-      personType = pt;
-      rollNo;
-      batch;
-      studentId;
-      employeeId;
-      faceDescriptor;
-      createdAt = Time.now();
+      id; name; personType = pt; rollNo; batch;
+      studentId; employeeId; faceDescriptor; createdAt = Time.now();
     });
     id;
   };
 
   public query func getAllPersons() : async [PersonSummary] {
-    allPersonValues().map(func(p : Person) : PersonSummary {
-      {
-        id = p.id;
-        name = p.name;
-        personType = p.personType;
-        rollNo = p.rollNo;
-        batch = p.batch;
-        studentId = p.studentId;
-        employeeId = p.employeeId;
-        createdAt = p.createdAt;
-      };
+    allPersons().map(func(p : Person) : PersonSummary {
+      { id = p.id; name = p.name; personType = p.personType; rollNo = p.rollNo;
+        batch = p.batch; studentId = p.studentId; employeeId = p.employeeId;
+        createdAt = p.createdAt };
     });
   };
 
   public query func getAllFaceDescriptors() : async [DescriptorEntry] {
-    allPersonValues().map(func(p : Person) : DescriptorEntry {
-      {
-        id = p.id;
-        personType = p.personType;
-        name = p.name;
-        faceDescriptor = p.faceDescriptor;
-      };
+    allPersons().map(func(p : Person) : DescriptorEntry {
+      { id = p.id; personType = p.personType; name = p.name; faceDescriptor = p.faceDescriptor };
     });
   };
 
   public query func getPerson(id : Nat) : async Person {
-    getPerson_(id);
+    switch (persons.get(id)) {
+      case (null) Runtime.trap("Person not found");
+      case (?p) p;
+    };
   };
 
   public query func getPersonSummary(id : Nat) : async PersonSummary {
-    let p = getPerson_(id);
-    {
-      id = p.id;
-      name = p.name;
-      personType = p.personType;
-      rollNo = p.rollNo;
-      batch = p.batch;
-      studentId = p.studentId;
-      employeeId = p.employeeId;
-      createdAt = p.createdAt;
+    switch (persons.get(id)) {
+      case (null) Runtime.trap("Person not found");
+      case (?p) {
+        { id = p.id; name = p.name; personType = p.personType; rollNo = p.rollNo;
+          batch = p.batch; studentId = p.studentId; employeeId = p.employeeId;
+          createdAt = p.createdAt };
+      };
     };
   };
 
   public shared func updatePerson(
-    id : Nat,
-    studentId : Text,
-    employeeId : Text,
-    name : Text,
-    rollNo : Text,
-    batch : Text
+    id : Nat, studentId : Text, employeeId : Text,
+    name : Text, rollNo : Text, batch : Text
   ) : async () {
-    let p = getPerson_(id);
-    updatePersonEntry(id, {
-      id = p.id;
-      name = if (name == "") p.name else name;
-      personType = p.personType;
-      rollNo;
-      batch;
-      studentId = if (studentId == "") p.studentId else studentId;
-      employeeId = if (employeeId == "") p.employeeId else employeeId;
-      faceDescriptor = p.faceDescriptor;
-      createdAt = p.createdAt;
-    });
+    switch (persons.get(id)) {
+      case (null) Runtime.trap("Person not found");
+      case (?p) {
+        persons.remove(id);
+        persons.add(id, {
+          id = p.id;
+          name = if (name == "") p.name else name;
+          personType = p.personType; rollNo; batch;
+          studentId = if (studentId == "") p.studentId else studentId;
+          employeeId = if (employeeId == "") p.employeeId else employeeId;
+          faceDescriptor = p.faceDescriptor; createdAt = p.createdAt;
+        });
+      };
+    };
   };
 
-  // Update only the face descriptor for a person
   public shared func updatePersonDescriptor(id : Nat, faceDescriptor : [Float]) : async () {
-    let p = getPerson_(id);
-    updatePersonEntry(id, {
-      id = p.id;
-      name = p.name;
-      personType = p.personType;
-      rollNo = p.rollNo;
-      batch = p.batch;
-      studentId = p.studentId;
-      employeeId = p.employeeId;
-      faceDescriptor;
-      createdAt = p.createdAt;
-    });
+    switch (persons.get(id)) {
+      case (null) Runtime.trap("Person not found");
+      case (?p) {
+        persons.remove(id);
+        persons.add(id, {
+          id = p.id; name = p.name; personType = p.personType;
+          rollNo = p.rollNo; batch = p.batch; studentId = p.studentId;
+          employeeId = p.employeeId; faceDescriptor; createdAt = p.createdAt;
+        });
+      };
+    };
   };
 
   public shared func deletePerson(id : Nat) : async () {
@@ -218,49 +166,31 @@ persistent actor {
       case (?_) {};
     };
     persons.remove(id);
-    let toRemove = allAttendanceValues()
+    let toRemove = allAttendance()
       .filter(func(r : AttendanceRecord) : Bool { r.personId == id })
       .map(func(r : AttendanceRecord) : Nat { r.id });
     for (rid in toRemove.vals()) {
-      attendanceRecords.remove(rid);
+      attendance.remove(rid);
     };
   };
 
   public shared func recordAttendance(
-    personId : Nat,
-    personTypeStr : Text,
-    name : Text,
-    slot : Text,
-    timestamp : Int,
-    dateStr : Text,
-    monthStr : Text,
-    timeStr : Text,
-    year : Int,
-    month : Int,
-    day : Int
+    personId : Nat, personTypeStr : Text, name : Text, slot : Text,
+    timestamp : Int, dateStr : Text, monthStr : Text, timeStr : Text,
+    year : Int, month : Int, day : Int
   ) : async Nat {
     let pt : PersonType = if (personTypeStr == "student") #student else #employee;
-    let id = nextAttendanceId();
-    attendanceRecords.add(id, {
-      id;
-      personId;
-      name;
-      personType = pt;
-      slot;
-      timestamp;
-      dateStr;
-      monthStr;
-      timeStr;
-      year;
-      month;
-      day;
-      editedAt = null;
+    attendanceIdCounter += 1;
+    let id = attendanceIdCounter;
+    attendance.add(id, {
+      id; personId; name; personType = pt; slot; timestamp;
+      dateStr; monthStr; timeStr; year; month; day; editedAt = null;
     });
     id;
   };
 
   public query func getAttendanceRecords() : async [AttendanceRecord] {
-    allAttendanceValues().sort(
+    allAttendance().sort(
       func(a : AttendanceRecord, b : AttendanceRecord) : { #less; #equal; #greater } {
         Int.compare(b.timestamp, a.timestamp);
       }
@@ -268,48 +198,43 @@ persistent actor {
   };
 
   public query func getAttendanceByDate(dateStr : Text) : async [AttendanceRecord] {
-    allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr });
+    allAttendance().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr });
   };
 
   public query func getAttendanceByMonth(monthStr : Text) : async [AttendanceRecord] {
-    allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.monthStr == monthStr });
+    allAttendance().filter(func(r : AttendanceRecord) : Bool { r.monthStr == monthStr });
   };
 
   public shared func updateAttendanceRecord(
-    id : Nat,
-    name : Text,
-    slot : Text,
-    dateStr : Text,
-    monthStr : Text,
-    timeStr : Text
+    id : Nat, name : Text, slot : Text,
+    dateStr : Text, monthStr : Text, timeStr : Text
   ) : async () {
-    let r = switch (attendanceRecords.get(id)) {
+    switch (attendance.get(id)) {
       case (null) Runtime.trap("Record not found");
-      case (?r) r;
+      case (?r) {
+        attendance.remove(id);
+        attendance.add(id, {
+          id = r.id; personId = r.personId;
+          name = if (name == "") r.name else name;
+          personType = r.personType;
+          slot = if (slot == "") r.slot else slot;
+          timestamp = r.timestamp;
+          dateStr = if (dateStr == "") r.dateStr else dateStr;
+          monthStr = if (monthStr == "") r.monthStr else monthStr;
+          timeStr = if (timeStr == "") r.timeStr else timeStr;
+          year = r.year; month = r.month; day = r.day;
+          editedAt = ?Time.now();
+        });
+      };
     };
-    updateAttendanceEntry(id, {
-      id = r.id;
-      personId = r.personId;
-      name = if (name == "") r.name else name;
-      personType = r.personType;
-      slot = if (slot == "") r.slot else slot;
-      timestamp = r.timestamp;
-      dateStr = if (dateStr == "") r.dateStr else dateStr;
-      monthStr = if (monthStr == "") r.monthStr else monthStr;
-      timeStr = if (timeStr == "") r.timeStr else timeStr;
-      year = r.year;
-      month = r.month;
-      day = r.day;
-      editedAt = ?Time.now();
-    });
   };
 
   public shared func deleteAttendanceRecord(id : Nat) : async () {
-    attendanceRecords.remove(id);
+    attendance.remove(id);
   };
 
   public query func hasAttendedSlot(personId : Nat, slot : Text, dateStr : Text) : async Bool {
-    allAttendanceValues().filter(
+    allAttendance().filter(
       func(r : AttendanceRecord) : Bool {
         r.personId == personId and r.slot == slot and r.dateStr == dateStr;
       }
@@ -317,11 +242,12 @@ persistent actor {
   };
 
   public query func getStats() : async Stats {
-    let arr = allAttendanceValues();
+    let arr = allAttendance();
     var uniqueMonths : [Text] = [];
     for (r in arr.vals()) {
       let m = r.monthStr;
-      if (uniqueMonths.filter(func(um : Text) : Bool { um == m }).size() == 0) {
+      let exists = uniqueMonths.filter(func(um : Text) : Bool { um == m }).size() > 0;
+      if (not exists) {
         let old = uniqueMonths;
         uniqueMonths := Array.tabulate<Text>(old.size() + 1, func(i : Nat) : Text {
           if (i < old.size()) old[i] else m;
@@ -330,13 +256,13 @@ persistent actor {
     };
     {
       totalPersons = persons.size();
-      totalAttendance = attendanceRecords.size();
+      totalAttendance = attendance.size();
       todayCheckins = 0;
       activeMonths = uniqueMonths;
     };
   };
 
   public query func getTodayCheckins(dateStr : Text) : async Nat {
-    allAttendanceValues().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr }).size();
+    allAttendance().filter(func(r : AttendanceRecord) : Bool { r.dateStr == dateStr }).size();
   };
 };

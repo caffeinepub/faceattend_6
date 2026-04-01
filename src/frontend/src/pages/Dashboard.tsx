@@ -941,16 +941,16 @@ export default function Dashboard() {
                         <Badge
                           variant="outline"
                           className={
-                            "student" in r.personType
+                            r.personType === "student"
                               ? "border-primary/40 text-primary"
                               : "border-chart-2/40 text-chart-2"
                           }
                         >
-                          {"student" in r.personType ? "Student" : "Employee"}
+                          {r.personType === "student" ? "Student" : "Employee"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-foreground">
-                        {"student" in r.personType
+                        {r.personType === "student"
                           ? personBatchMap.get(r.personId.toString()) || "—"
                           : "—"}
                       </TableCell>
