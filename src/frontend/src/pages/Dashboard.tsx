@@ -85,6 +85,21 @@ function formatDateDisplay(day: bigint, month: bigint, year: bigint): string {
   return `${dd}/${mm}/${y} (${dayName})`;
 }
 
+function parseNSQFBatch(batch: string): { level: string; semester: string } {
+  if (!batch) return { level: "—", semester: "—" };
+  // Format: "NSQF Level-III - 1st Semester"
+  const dashIdx = batch.indexOf(" - ");
+  if (dashIdx !== -1) {
+    const levelPart = batch
+      .slice(0, dashIdx)
+      .replace("NSQF ", "")
+      .replace("-", " ");
+    const semPart = batch.slice(dashIdx + 3);
+    return { level: levelPart, semester: semPart };
+  }
+  return { level: batch, semester: "—" };
+}
+
 function StatCard({
   label,
   value,
@@ -140,9 +155,7 @@ function EditPersonDialog({
   const cameraReady = useRef(false);
 
   const camera = useCamera({ facingMode: "user" });
-  const isStudent = person
-    ? (person.personType as any).student !== undefined
-    : false;
+  const isStudent = person ? String(person.personType) === "student" : false;
 
   useEffect(() => {
     if (person && open) {
@@ -567,7 +580,7 @@ function ManagePersons() {
               </thead>
               <tbody>
                 {persons.map((p, i) => {
-                  const isStudent = (p.personType as any).student !== undefined;
+                  const isStudent = String(p.personType) === "student";
                   const idValue = isStudent ? p.studentId : p.employeeId;
                   const batchRoll =
                     [p.batch, p.rollNo].filter(Boolean).join(" / ") || "—";
@@ -661,6 +674,12 @@ export default function Dashboard() {
     return map;
   }, [persons]);
 
+  const personRollNoMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of persons) map.set(p.id.toString(), p.rollNo || "");
+    return map;
+  }, [persons]);
+
   const updateAttendance = useUpdateAttendance();
   const deleteAttendance = useDeleteAttendance();
 
@@ -718,27 +737,36 @@ export default function Dashboard() {
   };
 
   const downloadCSV = useCallback(() => {
-    const personBatchMap = new Map<string, string>();
+    const batchMap = new Map<string, string>();
+    const rollMap = new Map<string, string>();
     for (const p of persons) {
-      personBatchMap.set(p.id.toString(), p.batch || "");
+      batchMap.set(p.id.toString(), p.batch || "");
+      rollMap.set(p.id.toString(), p.rollNo || "");
     }
     const header = [
       "Name",
       "Type",
-      "NSQF Level / Semester",
+      "Roll No",
+      "NSQF Level",
+      "Semester",
       "Entry Time",
       "Date",
       "Slot",
     ];
     const rows = attendance.map((r) => {
-      const isStudent = (r.personType as any).student !== undefined;
-      const batchVal = personBatchMap.get(r.personId.toString()) || "";
-      const nsqfLevel = isStudent && batchVal ? batchVal : "—";
+      const isStudent = String(r.personType) === "student";
+      const batchVal = batchMap.get(r.personId.toString()) || "";
+      const rollNo = rollMap.get(r.personId.toString()) || "";
+      const { level, semester } = isStudent
+        ? parseNSQFBatch(batchVal)
+        : { level: "—", semester: "—" };
       const dateDisplay = formatDateDisplay(r.day, r.month, r.year);
       return [
         r.name,
         isStudent ? "Student" : "Employee",
-        nsqfLevel,
+        rollNo || "—",
+        level,
+        semester,
         r.timeStr,
         dateDisplay,
         r.slot,
@@ -910,7 +938,13 @@ export default function Dashboard() {
                       Type
                     </TableHead>
                     <TableHead className="text-muted-foreground">
-                      NSQF / Semester
+                      Roll No
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      NSQF Level
+                    </TableHead>
+                    <TableHead className="text-muted-foreground">
+                      Semester
                     </TableHead>
                     <TableHead className="text-muted-foreground">
                       Slot
@@ -927,64 +961,76 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAttendance.map((r, idx) => (
-                    <TableRow
-                      key={String(r.id)}
-                      className="border-border"
-                      data-ocid={`dashboard.attendance.row.item.${idx + 1}`}
-                    >
-                      <TableCell className="text-muted-foreground text-xs font-mono">
-                        {idx + 1}
-                      </TableCell>
-                      <TableCell className="font-medium">{r.name}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className={
-                            r.personType === "student"
-                              ? "border-primary/40 text-primary"
-                              : "border-chart-2/40 text-chart-2"
-                          }
-                        >
-                          {r.personType === "student" ? "Student" : "Employee"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-foreground">
-                        {r.personType === "student"
-                          ? personBatchMap.get(r.personId.toString()) || "—"
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm">{r.slot}</TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {r.timeStr}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {r.dateStr}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                            onClick={() => openEditAtt(r)}
-                            data-ocid={`dashboard.attendance.edit_button.${idx + 1}`}
+                  {filteredAttendance.map((r, idx) => {
+                    const isStudent = String(r.personType) === "student";
+                    const { level, semester } = isStudent
+                      ? parseNSQFBatch(
+                          personBatchMap.get(r.personId.toString()) || "",
+                        )
+                      : { level: "—", semester: "—" };
+                    return (
+                      <TableRow
+                        key={String(r.id)}
+                        className="border-border"
+                        data-ocid={`dashboard.attendance.row.item.${idx + 1}`}
+                      >
+                        <TableCell className="text-muted-foreground text-xs font-mono">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="font-medium">{r.name}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={
+                              isStudent
+                                ? "border-primary/40 text-primary"
+                                : "border-chart-2/40 text-chart-2"
+                            }
                           >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                            onClick={() => setDeleteAttId(r.id)}
-                            data-ocid={`dashboard.attendance.delete_button.${idx + 1}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            {isStudent ? "Student" : "Employee"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-black dark:text-foreground">
+                          {personRollNoMap.get(r.personId.toString()) || "—"}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium text-black dark:text-foreground">
+                          {level}
+                        </TableCell>
+                        <TableCell className="text-sm text-black dark:text-foreground">
+                          {semester}
+                        </TableCell>
+                        <TableCell className="text-sm">{r.slot}</TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {r.timeStr}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {r.dateStr}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => openEditAtt(r)}
+                              data-ocid={`dashboard.attendance.edit_button.${idx + 1}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={() => setDeleteAttId(r.id)}
+                              data-ocid={`dashboard.attendance.delete_button.${idx + 1}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

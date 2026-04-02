@@ -279,19 +279,78 @@ export default function FaceScan() {
         day,
       });
 
-      // Fire-and-forget webhook POST (no-cors to avoid preflight blocking)
+      // Fire-and-forget webhook POST with full updated payload
       const { webhookUrl } = loadSettings();
-      if (webhookUrl) {
+      if (webhookUrl && actor) {
+        // Fetch full person details to get rollNo, batch, studentId, employeeId
+        let rollNo = "";
+        let studentId = "";
+        let employeeId = "";
+        let nsqfLevel = "";
+        let semester = "";
+
+        try {
+          const personSummary = await actor.getPersonSummary(target.personId);
+          rollNo = personSummary.rollNo ?? "";
+          studentId = personSummary.studentId ?? "";
+          employeeId = personSummary.employeeId ?? "";
+          const batchStr = personSummary.batch ?? "";
+          // batch is stored as "NSQF Level-III - 1st Semester" for students
+          if (batchStr.includes(" - ")) {
+            const parts = batchStr.split(" - ");
+            nsqfLevel = parts[0]?.trim() ?? "";
+            semester = parts[1]?.trim() ?? "";
+          } else if (batchStr) {
+            nsqfLevel = batchStr.trim();
+          }
+        } catch (_err) {
+          // Gracefully fall back — don't let a fetch failure break the success flow
+        }
+
         const payload = new URLSearchParams({
           personId: String(target.personId),
           name: target.name,
           personType: target.personTypeStr,
+          rollNo,
+          studentId,
+          employeeId,
+          nsqfLevel,
+          semester,
           slot,
           date: dateStr,
           month: monthStr,
           time: timeStr,
           year: String(now.getFullYear()),
+          day: String(now.getDate()),
+          verificationCount: "",
         });
+
+        fetch(webhookUrl, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: payload.toString(),
+        }).catch(() => {});
+      } else if (webhookUrl) {
+        // actor not available — send minimal payload without person details
+        const payload = new URLSearchParams({
+          personId: String(target.personId),
+          name: target.name,
+          personType: target.personTypeStr,
+          rollNo: "",
+          studentId: "",
+          employeeId: "",
+          nsqfLevel: "",
+          semester: "",
+          slot,
+          date: dateStr,
+          month: monthStr,
+          time: timeStr,
+          year: String(now.getFullYear()),
+          day: String(now.getDate()),
+          verificationCount: "",
+        });
+
         fetch(webhookUrl, {
           method: "POST",
           mode: "no-cors",

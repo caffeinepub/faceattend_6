@@ -3,9 +3,9 @@ import Map "mo:core/Map";
 import Int "mo:core/Int";
 import Runtime "mo:core/Runtime";
 import Time "mo:core/Time";
-import Migration "migration";
 
-(with migration = Migration.run)
+
+
 persistent actor {
   type PersonType = { #student; #employee };
 
