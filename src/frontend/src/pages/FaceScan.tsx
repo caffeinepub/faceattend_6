@@ -298,10 +298,12 @@ export default function FaceScan() {
           // batch is stored as "NSQF Level-III - 1st Semester" for students
           if (batchStr.includes(" - ")) {
             const parts = batchStr.split(" - ");
-            nsqfLevel = parts[0]?.trim() ?? "";
+            nsqfLevel = (parts[0]?.trim() ?? "")
+              .replace("NSQF ", "")
+              .replace("-", " ");
             semester = parts[1]?.trim() ?? "";
           } else if (batchStr) {
-            nsqfLevel = batchStr.trim();
+            nsqfLevel = batchStr.trim().replace("NSQF ", "").replace("-", " ");
           }
         } catch (_err) {
           // Gracefully fall back — don't let a fetch failure break the success flow

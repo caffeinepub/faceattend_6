@@ -47,6 +47,23 @@ import { MODEL_URL, getFaceApi } from "../utils/faceApiCdn";
 
 // ─────────────────────────────────────────────
 // Edit Person Dialog
+
+// Helper to parse stored batch string into display-friendly level and semester
+function parseNSQFBatch(batch: string): { level: string; semester: string } {
+  if (!batch) return { level: "—", semester: "—" };
+  // Format: "NSQF Level-III - 1st Semester"
+  const dashIdx = batch.indexOf(" - ");
+  if (dashIdx !== -1) {
+    const levelPart = batch
+      .slice(0, dashIdx)
+      .replace("NSQF ", "")
+      .replace("-", " ");
+    const semPart = batch.slice(dashIdx + 3);
+    return { level: levelPart, semester: semPart };
+  }
+  return { level: batch.replace("NSQF ", "").replace("-", " "), semester: "—" };
+}
+
 // ─────────────────────────────────────────────
 function EditPersonDialog({
   person,
@@ -649,12 +666,19 @@ export default function Report() {
     const rows = filtered.map((r) => {
       const isStudent = (r.personType as any).student !== undefined;
       const batchVal = personBatchMap.get(r.personId.toString()) || "";
-      const nsqfLevel = isStudent && batchVal ? batchVal : "—";
+      const { level: nsqfLvl, semester: nsqfSem } =
+        isStudent && batchVal
+          ? parseNSQFBatch(batchVal)
+          : { level: "—", semester: "—" };
       const dateDisplay = formatDateDisplay(r.day, r.month, r.year);
       return [
         r.name,
         isStudent ? "Student" : "Employee",
-        nsqfLevel,
+        isStudent
+          ? nsqfLvl !== "—"
+            ? `${nsqfLvl}${nsqfSem !== "—" ? ` - ${nsqfSem}` : ""}`
+            : "—"
+          : "—",
         r.timeStr,
         dateDisplay,
         r.slot,
@@ -823,7 +847,16 @@ export default function Report() {
                         (r.personType as any).student !== undefined;
                       const batchVal =
                         personBatchMap.get(r.personId.toString()) || "";
-                      const nsqfLevel = isStudent && batchVal ? batchVal : "—";
+                      const { level: nsqfLvl2, semester: nsqfSem2 } =
+                        isStudent && batchVal
+                          ? parseNSQFBatch(batchVal)
+                          : { level: "—", semester: "—" };
+                      const nsqfLevel =
+                        isStudent && batchVal
+                          ? nsqfLvl2 !== "—"
+                            ? `${nsqfLvl2}${nsqfSem2 !== "—" ? ` - ${nsqfSem2}` : ""}`
+                            : "—"
+                          : "—";
                       const dateDisplay = formatDateDisplay(
                         r.day,
                         r.month,

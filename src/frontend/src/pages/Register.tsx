@@ -546,11 +546,9 @@ export default function Register() {
                     <SelectValue placeholder="Select NSQF Level" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NSQF Level-III">
-                      NSQF Level-III
-                    </SelectItem>
-                    <SelectItem value="NSQF Level-IV">NSQF Level-IV</SelectItem>
-                    <SelectItem value="NSQF Level-V">NSQF Level-V</SelectItem>
+                    <SelectItem value="NSQF Level-III">Level III</SelectItem>
+                    <SelectItem value="NSQF Level-IV">Level IV</SelectItem>
+                    <SelectItem value="NSQF Level-V">Level V</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
