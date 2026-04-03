@@ -89,11 +89,7 @@ export default function FaceScan() {
     videoRef,
     canvasRef,
     switchCamera,
-  } = useCamera({
-    facingMode: "user",
-    width: 640,
-    height: 480,
-  });
+  } = useCamera({ facingMode: "user", width: 640, height: 480 });
 
   const loadModels = useCallback(async () => {
     if (modelsLoaded || loadingModels) return;
@@ -107,7 +103,6 @@ export default function FaceScan() {
         fa.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
       ]);
       setModelsLoaded(true);
-      // Clear timers since models loaded successfully
       if (manualBtnTimerRef.current) clearTimeout(manualBtnTimerRef.current);
       if (autoManualTimerRef.current) clearTimeout(autoManualTimerRef.current);
     } catch (_e) {
@@ -122,24 +117,15 @@ export default function FaceScan() {
   useEffect(() => {
     loadModels();
     startCamera();
-
-    // Show manual mode button after 5 seconds if models haven't loaded
-    manualBtnTimerRef.current = setTimeout(() => {
-      setShowManualBtn(true);
-    }, 5000);
-
-    // Auto-switch to manual mode after 12 seconds if models still haven't loaded
+    manualBtnTimerRef.current = setTimeout(() => setShowManualBtn(true), 5000);
     autoManualTimerRef.current = setTimeout(() => {
       if (!modelsLoadedRef.current) {
         setManualMode((prev) => {
-          if (!prev) {
-            toast.info("AI not available — switched to manual mode");
-          }
+          if (!prev) toast.info("AI not available — switched to manual mode");
           return true;
         });
       }
     }, 12000);
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       if (manualBtnTimerRef.current) clearTimeout(manualBtnTimerRef.current);
@@ -147,7 +133,6 @@ export default function FaceScan() {
     };
   }, []);
 
-  // Clear fallback timers once models load
   useEffect(() => {
     if (modelsLoaded) {
       modelsLoadedRef.current = true;
@@ -163,13 +148,10 @@ export default function FaceScan() {
     if (!isActive || !modelsLoaded) return;
     const fa = faceApiRef.current;
     if (!fa) return;
-
     if (intervalRef.current) clearInterval(intervalRef.current);
-
     intervalRef.current = setInterval(async () => {
       if (isProcessingRef.current || !videoRef.current) return;
       isProcessingRef.current = true;
-
       try {
         const detection = await fa
           .detectSingleFace(
@@ -178,7 +160,6 @@ export default function FaceScan() {
           )
           .withFaceLandmarks()
           .withFaceDescriptor();
-
         if (!detection) {
           setScanStatus("no-face");
           setMatchResult(null);
@@ -186,18 +167,15 @@ export default function FaceScan() {
           isProcessingRef.current = false;
           return;
         }
-
         if (descriptors.length === 0) {
           setScanStatus("unknown");
           setMatchResult(null);
           isProcessingRef.current = false;
           return;
         }
-
         let bestDist = Number.POSITIVE_INFINITY;
         let bestEntry: DescriptorEntry | null = null;
         const queryDesc = detection.descriptor;
-
         for (const entry of descriptors) {
           const stored = new Float32Array(entry.faceDescriptor);
           const dist = fa.euclideanDistance(queryDesc, stored);
@@ -206,7 +184,6 @@ export default function FaceScan() {
             bestEntry = entry;
           }
         }
-
         if (bestDist < 0.6 && bestEntry) {
           const typeStr =
             bestEntry.personType === "student" ? "student" : "employee";
@@ -218,7 +195,6 @@ export default function FaceScan() {
           };
           setScanStatus("match");
           setMatchResult(result);
-
           const slot = getCurrentSlot();
           const dateStr = toLocalDateStr(new Date());
           if (slot && actor) {
@@ -240,7 +216,6 @@ export default function FaceScan() {
         isProcessingRef.current = false;
       }
     }, 500);
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -250,7 +225,6 @@ export default function FaceScan() {
     const target = overrideMatch ?? matchResult;
     if (!target) return;
     const slot = getCurrentSlot();
-
     const now = new Date();
     const dateStr = toLocalDateStr(now);
     const monthStr = dateStr.slice(0, 7);
@@ -258,12 +232,10 @@ export default function FaceScan() {
     const year = BigInt(now.getFullYear());
     const month = BigInt(now.getMonth() + 1);
     const day = BigInt(now.getDate());
-
     if (!overrideMatch && alreadyCheckedIn) {
       toast.warning(`${target.name} already checked in for ${slot} slot`);
       return;
     }
-
     setMarkingAttendance(true);
     try {
       await recordAttendance.mutateAsync({
@@ -278,24 +250,19 @@ export default function FaceScan() {
         month,
         day,
       });
-
-      // Fire-and-forget webhook POST with full updated payload
       const { webhookUrl } = loadSettings();
       if (webhookUrl && actor) {
-        // Fetch full person details to get rollNo, batch, studentId, employeeId
         let rollNo = "";
         let studentId = "";
         let employeeId = "";
         let nsqfLevel = "";
         let semester = "";
-
         try {
           const personSummary = await actor.getPersonSummary(target.personId);
           rollNo = personSummary.rollNo ?? "";
           studentId = personSummary.studentId ?? "";
           employeeId = personSummary.employeeId ?? "";
           const batchStr = personSummary.batch ?? "";
-          // batch is stored as "NSQF Level-III - 1st Semester" for students
           if (batchStr.includes(" - ")) {
             const parts = batchStr.split(" - ");
             nsqfLevel = (parts[0]?.trim() ?? "")
@@ -305,10 +272,7 @@ export default function FaceScan() {
           } else if (batchStr) {
             nsqfLevel = batchStr.trim().replace("NSQF ", "").replace("-", " ");
           }
-        } catch (_err) {
-          // Gracefully fall back — don't let a fetch failure break the success flow
-        }
-
+        } catch (_err) {}
         const payload = new URLSearchParams({
           personId: String(target.personId),
           name: target.name,
@@ -326,7 +290,6 @@ export default function FaceScan() {
           day: String(now.getDate()),
           verificationCount: "",
         });
-
         fetch(webhookUrl, {
           method: "POST",
           mode: "no-cors",
@@ -334,7 +297,6 @@ export default function FaceScan() {
           body: payload.toString(),
         }).catch(() => {});
       } else if (webhookUrl) {
-        // actor not available — send minimal payload without person details
         const payload = new URLSearchParams({
           personId: String(target.personId),
           name: target.name,
@@ -352,7 +314,6 @@ export default function FaceScan() {
           day: String(now.getDate()),
           verificationCount: "",
         });
-
         fetch(webhookUrl, {
           method: "POST",
           mode: "no-cors",
@@ -360,7 +321,6 @@ export default function FaceScan() {
           body: payload.toString(),
         }).catch(() => {});
       }
-
       toast.success(
         `✓ Attendance marked for ${target.name} — ${slot} at ${timeStr}`,
       );
@@ -390,79 +350,83 @@ export default function FaceScan() {
 
   const slot = getCurrentSlot();
 
-  const statusConfig: Record<
-    ScanStatus,
-    { label: string; color: string; bg: string; border: string }
-  > = {
-    idle: {
-      label: "Initializing...",
-      color: "text-muted-foreground",
-      bg: "bg-muted/30",
-      border: "border-border",
-    },
-    "no-face": {
-      label: "No face detected",
-      color: "text-muted-foreground",
-      bg: "bg-muted/20",
-      border: "border-border",
-    },
-    unknown: {
-      label: "Unknown face",
-      color: "text-warning",
-      bg: "bg-warning/10",
-      border: "border-warning/30",
-    },
-    match: {
-      label: matchResult ? `Match found: ${matchResult.name}` : "Match found!",
-      color: "text-success",
-      bg: "bg-success/10",
-      border: "border-success/30",
-    },
-  };
-
-  const status = statusConfig[scanStatus];
-  const bracketColor =
-    scanStatus === "match" ? "oklch(0.65 0.18 142)" : "oklch(0.58 0.20 250)";
+  const isMatch = scanStatus === "match";
+  const bracketColor = isMatch
+    ? "oklch(0.72 0.22 145)"
+    : "oklch(0.80 0.18 200)";
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 relative z-10">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.5 }}
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-            <ScanFace className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">Face Scan</h1>
-            <p className="text-sm text-muted-foreground">
-              {manualMode
-                ? "Manual attendance verification"
-                : "AI-powered attendance verification"}
-            </p>
-          </div>
-          <div className="ml-auto px-3 py-1 rounded-full bg-primary/20 border border-primary/30 text-primary text-xs font-semibold">
-            {slot} Slot
+        {/* Page header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{
+                background: "rgba(35,230,242,0.10)",
+                border: "1px solid rgba(35,230,242,0.35)",
+              }}
+            >
+              <ScanFace
+                className="w-5 h-5"
+                style={{ color: "oklch(0.80 0.18 200)" }}
+              />
+            </div>
+            <div>
+              <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+                Biometric Scan
+              </h1>
+              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+                {manualMode
+                  ? "Manual Attendance Verification"
+                  : "AI-Powered Attendance Verification"}
+              </p>
+            </div>
+            <div
+              className="ml-auto px-3 py-1 rounded-full font-orbitron text-xs uppercase tracking-wider"
+              style={{
+                background: "rgba(35,230,242,0.10)",
+                border: "1px solid rgba(35,230,242,0.35)",
+                color: "oklch(0.80 0.18 200)",
+              }}
+            >
+              {slot} Slot
+            </div>
           </div>
         </div>
 
         {/* Manual mode banner */}
         {manualMode && (
-          <div
-            className="mb-4 p-3 rounded-lg bg-warning/10 border border-warning/30 flex items-center gap-2 text-sm text-warning"
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 rounded-lg flex items-center gap-2 text-sm"
+            style={{
+              background: "rgba(128,96,0,0.15)",
+              border: "1px solid rgba(200,160,0,0.3)",
+              color: "oklch(0.80 0.18 70)",
+            }}
             data-ocid="scan.manual_mode.panel"
           >
             <AlertCircle className="w-4 h-4 shrink-0" />
             AI not available — select person manually
-          </div>
+          </motion.div>
         )}
 
         {/* AI loading indicator */}
         {!manualMode && (loadingModels || (!modelsLoaded && !camLoading)) && (
           <div
-            className="mb-4 p-3 rounded-lg bg-primary/10 border border-primary/20 flex items-center gap-2 text-sm text-primary"
+            className="mb-4 p-3 rounded-lg flex items-center gap-2 text-sm"
+            style={{
+              background: "rgba(35,230,242,0.06)",
+              border: "1px solid rgba(35,230,242,0.20)",
+              color: "oklch(0.80 0.18 200)",
+            }}
             data-ocid="scan.loading_state"
           >
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -473,7 +437,8 @@ export default function FaceScan() {
               <button
                 type="button"
                 onClick={() => setManualMode(true)}
-                className="ml-auto text-xs underline underline-offset-2 text-primary/80 hover:text-primary"
+                className="ml-auto text-xs underline underline-offset-2"
+                style={{ color: "oklch(0.70 0.10 200)" }}
                 data-ocid="scan.manual_mode.button"
               >
                 Use Manual Mode
@@ -484,8 +449,13 @@ export default function FaceScan() {
 
         {/* Camera viewfinder */}
         <div
-          className="rounded-xl overflow-hidden border border-border bg-black relative"
-          style={{ aspectRatio: "4/3" }}
+          className="relative overflow-hidden rounded-xl bracket-expand"
+          style={{
+            aspectRatio: "4/3",
+            background: "#000",
+            border: `1px solid ${bracketColor}`,
+            boxShadow: `0 0 30px ${isMatch ? "rgba(69,255,122,0.15)" : "rgba(35,230,242,0.12)"}, 0 0 60px ${isMatch ? "rgba(69,255,122,0.05)" : "rgba(35,230,242,0.04)"}`,
+          }}
         >
           <video
             ref={videoRef}
@@ -496,8 +466,22 @@ export default function FaceScan() {
           />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Corner brackets */}
+          {/* Rotating scan ring when active */}
+          {isActive && modelsLoaded && (
+            <div
+              className="absolute pointer-events-none spin-slow"
+              style={{
+                inset: "12%",
+                borderRadius: "50%",
+                border: `1px dashed ${bracketColor}`,
+                opacity: 0.25,
+              }}
+            />
+          )}
+
+          {/* Prominent HUD corner brackets */}
           <div className="absolute inset-0 pointer-events-none">
+            {/* Top-left */}
             <div
               className="absolute top-4 left-4 w-8 h-8"
               style={{
@@ -506,8 +490,10 @@ export default function FaceScan() {
                 borderTopStyle: "solid",
                 borderLeftStyle: "solid",
                 borderColor: bracketColor,
+                boxShadow: `0 0 8px ${bracketColor}`,
               }}
             />
+            {/* Top-right */}
             <div
               className="absolute top-4 right-4 w-8 h-8"
               style={{
@@ -516,8 +502,10 @@ export default function FaceScan() {
                 borderTopStyle: "solid",
                 borderRightStyle: "solid",
                 borderColor: bracketColor,
+                boxShadow: `0 0 8px ${bracketColor}`,
               }}
             />
+            {/* Bottom-left */}
             <div
               className="absolute bottom-4 left-4 w-8 h-8"
               style={{
@@ -526,8 +514,10 @@ export default function FaceScan() {
                 borderBottomStyle: "solid",
                 borderLeftStyle: "solid",
                 borderColor: bracketColor,
+                boxShadow: `0 0 8px ${bracketColor}`,
               }}
             />
+            {/* Bottom-right */}
             <div
               className="absolute bottom-4 right-4 w-8 h-8"
               style={{
@@ -536,13 +526,29 @@ export default function FaceScan() {
                 borderBottomStyle: "solid",
                 borderRightStyle: "solid",
                 borderColor: bracketColor,
+                boxShadow: `0 0 8px ${bracketColor}`,
               }}
             />
+
+            {/* Scan line */}
             {isActive && modelsLoaded && (
               <div
-                className="absolute left-0 right-0 h-0.5 opacity-50 scan-line"
-                style={{ background: bracketColor }}
+                className="absolute left-0 right-0 h-0.5 opacity-60 scan-line"
+                style={{
+                  background: `linear-gradient(to right, transparent, ${bracketColor}, transparent)`,
+                  boxShadow: `0 0 6px ${bracketColor}`,
+                }}
               />
+            )}
+
+            {/* HUD readouts */}
+            {isActive && (
+              <div
+                className="absolute top-2 left-14 font-mono text-[9px] uppercase tracking-widest opacity-50"
+                style={{ color: bracketColor }}
+              >
+                SCANNING
+              </div>
             )}
           </div>
 
@@ -551,92 +557,172 @@ export default function FaceScan() {
             <button
               type="button"
               onClick={() => switchCamera()}
-              className="absolute top-14 right-2 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              className="absolute top-14 right-2 z-10 p-2 rounded-full transition-colors"
+              style={{
+                background: "rgba(0,0,0,0.6)",
+                border: "1px solid rgba(35,230,242,0.3)",
+              }}
               data-ocid="scan.toggle"
               aria-label="Switch camera"
             >
-              <SwitchCamera className="w-5 h-5" />
+              <SwitchCamera className="w-5 h-5 text-white" />
             </button>
           )}
 
           {camError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-card/90">
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: "rgba(4,11,20,0.90)" }}
+            >
               <div className="text-center space-y-2">
-                <AlertCircle className="w-10 h-10 text-destructive mx-auto" />
-                <p className="text-sm text-destructive">{camError.message}</p>
+                <AlertCircle
+                  className="w-10 h-10 mx-auto"
+                  style={{ color: "oklch(0.62 0.22 15)" }}
+                />
+                <p
+                  className="text-sm font-mono"
+                  style={{ color: "oklch(0.62 0.22 15)" }}
+                >
+                  {camError.message}
+                </p>
               </div>
             </div>
           )}
           {!isActive && !camLoading && !camError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-card/80">
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: "rgba(4,11,20,0.85)" }}
+            >
               <div className="text-center space-y-2">
-                <ScanFace className="w-12 h-12 text-muted-foreground mx-auto opacity-50" />
-                <p className="text-sm text-muted-foreground">
+                <ScanFace
+                  className="w-12 h-12 mx-auto opacity-30"
+                  style={{ color: "oklch(0.80 0.18 200)" }}
+                />
+                <p className="text-sm font-mono text-muted-foreground">
                   Starting camera...
                 </p>
               </div>
             </div>
           )}
           {camLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-card/80">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ background: "rgba(4,11,20,0.85)" }}
+            >
+              <Loader2
+                className="w-8 h-8 animate-spin"
+                style={{ color: "oklch(0.80 0.18 200)" }}
+              />
             </div>
           )}
         </div>
 
-        {/* AI status pill — only show when NOT in manual mode */}
+        {/* AI status panel */}
         {!manualMode && (
-          <div
-            className={`mt-4 px-4 py-3 rounded-xl border ${status.bg} ${status.border} flex items-center gap-3`}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-4 px-4 py-3 rounded-xl flex items-center gap-3 hud-panel"
+            data-ocid={
+              scanStatus === "match"
+                ? "scan.match.success_state"
+                : "scan.status.panel"
+            }
           >
             {scanStatus === "match" && (
-              <CheckCircle2 className="w-5 h-5 text-success" />
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0 neon-text-green" />
             )}
             {scanStatus === "unknown" && (
-              <AlertCircle className="w-5 h-5 text-warning" />
+              <AlertCircle
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: "oklch(0.80 0.18 70)" }}
+              />
             )}
             {(scanStatus === "idle" || scanStatus === "no-face") && (
-              <ScanFace className="w-5 h-5 text-muted-foreground" />
+              <ScanFace className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
             )}
             <div className="flex-1">
-              <p className={`font-semibold ${status.color}`}>{status.label}</p>
+              <p
+                className="font-semibold font-orbitron uppercase text-sm tracking-wide"
+                style={{
+                  color:
+                    scanStatus === "match"
+                      ? "oklch(0.72 0.22 145)"
+                      : scanStatus === "unknown"
+                        ? "oklch(0.80 0.18 70)"
+                        : undefined,
+                }}
+              >
+                {scanStatus === "match" && matchResult
+                  ? `MATCH: ${matchResult.name}`
+                  : scanStatus === "no-face"
+                    ? "NO FACE DETECTED"
+                    : scanStatus === "unknown"
+                      ? "UNKNOWN FACE"
+                      : "INITIALIZING..."}
+              </p>
               {matchResult && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Type:{" "}
-                  {matchResult.personTypeStr === "student"
-                    ? "Student"
-                    : "Employee"}
+                <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                  TYPE: {matchResult.personTypeStr.toUpperCase()}
                 </p>
               )}
             </div>
             {modelsLoaded && isActive && (
-              <span className="text-xs text-muted-foreground font-mono">
-                AI Active
+              <span
+                className="text-xs font-mono neon-flicker"
+                style={{ color: "oklch(0.80 0.18 200)" }}
+              >
+                AI ACTIVE
               </span>
             )}
-          </div>
+          </motion.div>
         )}
 
-        {/* Attendance slots info */}
-        <div className="mt-4 grid grid-cols-4 gap-2">
-          {SLOTS.map((s) => {
+        {/* Slot grid */}
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {SLOTS.map((s, i) => {
             const isCurrentSlot = slot === s.name;
             return (
-              <div
+              <motion.div
                 key={s.name}
-                className={`rounded-lg p-2 text-center text-xs border transition-all ${
-                  isCurrentSlot
-                    ? "bg-primary/20 border-primary/40 text-primary font-semibold"
-                    : "bg-muted/20 border-border text-muted-foreground"
-                }`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + i * 0.05 }}
+                className="rounded-lg p-2.5 sm:p-2 text-center text-xs border transition-all"
+                style={{
+                  background: isCurrentSlot
+                    ? "rgba(35,230,242,0.10)"
+                    : "rgba(8,18,28,0.55)",
+                  borderColor: isCurrentSlot
+                    ? "rgba(35,230,242,0.50)"
+                    : "rgba(35,230,242,0.18)",
+                  color: isCurrentSlot
+                    ? "oklch(0.80 0.18 200)"
+                    : "oklch(0.78 0.03 220)",
+                  boxShadow: isCurrentSlot
+                    ? "0 0 12px rgba(35,230,242,0.15)"
+                    : "none",
+                  fontFamily: isCurrentSlot
+                    ? "Orbitron, sans-serif"
+                    : undefined,
+                }}
               >
-                <div>{s.label}</div>
-                <div>{s.time}</div>
-              </div>
+                <div className="font-semibold">{s.label}</div>
+                <div className="opacity-60 mt-0.5">{s.time}</div>
+              </motion.div>
             );
           })}
           {slot === "General" && (
-            <div className="rounded-lg p-2 text-center text-xs border transition-all bg-primary/20 border-primary/40 text-primary font-semibold col-span-4">
+            <div
+              className="rounded-lg p-2 text-center text-xs border transition-all col-span-4"
+              style={{
+                background: "rgba(35,230,242,0.10)",
+                borderColor: "rgba(35,230,242,0.50)",
+                color: "oklch(0.80 0.18 200)",
+                fontFamily: "Orbitron, sans-serif",
+              }}
+            >
               <div>General</div>
               <div>Outside regular hours</div>
             </div>
@@ -651,7 +737,7 @@ export default function FaceScan() {
             className="mt-4 space-y-2"
             data-ocid="scan.manual_mode.panel"
           >
-            <h2 className="text-sm font-semibold text-foreground mb-2">
+            <h2 className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground mb-2">
               Select person to mark attendance:
             </h2>
             {persons.length === 0 ? (
@@ -668,9 +754,16 @@ export default function FaceScan() {
                   <div
                     key={String(person.id)}
                     data-ocid={`scan.item.${idx + 1}`}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:bg-muted/30 transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-xl hud-panel hover:border-primary/50 transition-colors"
                   >
-                    <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-bold text-sm">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm font-orbitron"
+                      style={{
+                        background: "rgba(35,230,242,0.12)",
+                        border: "1px solid rgba(35,230,242,0.35)",
+                        color: "oklch(0.80 0.18 200)",
+                      }}
+                    >
                       {person.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -678,11 +771,20 @@ export default function FaceScan() {
                         {person.name}
                       </p>
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        className="text-xs px-2 py-0.5 rounded-full font-medium font-orbitron uppercase tracking-wide"
+                        style={
                           isStudent
-                            ? "bg-blue-500/20 text-blue-400"
-                            : "bg-violet-500/20 text-violet-400"
-                        }`}
+                            ? {
+                                background: "rgba(35,230,242,0.10)",
+                                color: "oklch(0.80 0.18 200)",
+                                border: "1px solid rgba(35,230,242,0.25)",
+                              }
+                            : {
+                                background: "rgba(114,64,255,0.10)",
+                                color: "oklch(0.72 0.2 280)",
+                                border: "1px solid rgba(114,64,255,0.25)",
+                              }
+                        }
                       >
                         {isStudent ? "Student" : "Employee"}
                       </span>
@@ -692,9 +794,11 @@ export default function FaceScan() {
                       disabled={markingAttendance}
                       onClick={() => handleManualMark(person)}
                       data-ocid="scan.mark_attendance.button"
+                      className="font-orbitron uppercase text-xs tracking-wider"
                       style={{
-                        backgroundColor: "oklch(0.58 0.18 142)",
-                        color: "white",
+                        background: "oklch(0.72 0.22 145)",
+                        color: "oklch(0.08 0.015 250)",
+                        boxShadow: "0 0 12px rgba(69,255,122,0.3)",
                       }}
                     >
                       {markingAttendance ? (
@@ -722,20 +826,26 @@ export default function FaceScan() {
           >
             {alreadyCheckedIn ? (
               <div
-                className="p-3 rounded-xl bg-muted/30 border border-border flex items-center gap-2 text-muted-foreground"
+                className="p-3 rounded-xl flex items-center gap-2 hud-panel"
+                style={{ borderColor: "rgba(69,255,122,0.30)" }}
                 data-ocid="scan.already_checked.success_state"
               >
-                <CheckCircle2 className="w-5 h-5 text-success" />
-                <span className="text-sm">
+                <CheckCircle2 className="w-5 h-5 neon-text-green" />
+                <span
+                  className="text-sm font-orbitron uppercase tracking-wide"
+                  style={{ color: "oklch(0.72 0.22 145)" }}
+                >
                   Already checked in for {slot} slot
                 </span>
               </div>
             ) : (
               <Button
-                className="w-full h-12 text-base font-semibold"
+                className="w-full h-12 text-sm font-orbitron uppercase tracking-widest hud-glow-pulse"
                 style={{
-                  backgroundColor: "oklch(0.58 0.18 142)",
-                  color: "white",
+                  background: "oklch(0.72 0.22 145)",
+                  color: "oklch(0.08 0.015 250)",
+                  boxShadow: "0 0 24px rgba(69,255,122,0.35)",
+                  border: "1px solid rgba(69,255,122,0.5)",
                 }}
                 onClick={() => handleMarkAttendance()}
                 disabled={markingAttendance}

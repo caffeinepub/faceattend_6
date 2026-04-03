@@ -54,6 +54,26 @@ const BG_TYPES = [
   { value: "image", label: "Upload Image" },
 ];
 
+function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
+  return (
+    <div
+      className="flex items-center gap-2 px-4 py-3"
+      style={{ borderBottom: "1px solid rgba(35,230,242,0.15)" }}
+    >
+      <Icon className="w-4 h-4" style={{ color: "oklch(0.80 0.18 200)" }} />
+      <span
+        className="font-orbitron text-xs uppercase tracking-widest"
+        style={{ color: "oklch(0.80 0.18 200)" }}
+      >
+        {title}
+      </span>
+      <span className="ml-auto text-muted-foreground/30 text-lg leading-none">
+        {"["}
+      </span>
+    </div>
+  );
+}
+
 export default function Settings() {
   const saved = loadSettings();
 
@@ -118,7 +138,6 @@ export default function Settings() {
     ],
   );
 
-  // Apply settings live as they change
   useEffect(() => {
     applySettings(buildSettings());
   }, [buildSettings]);
@@ -136,40 +155,59 @@ export default function Settings() {
     }
   };
 
+  const hudInput =
+    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_12px_rgba(35,230,242,0.25)] text-foreground placeholder:text-muted-foreground/50";
+  const selectStyle = {
+    background: "rgba(12,22,36,0.80)",
+    borderColor: "rgba(35,230,242,0.25)",
+    color: "oklch(0.94 0.01 200)",
+  };
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 relative z-10">
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.5 }}
         className="space-y-5"
       >
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-            <AppWindow className="w-5 h-5 text-primary" />
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{
+              background: "rgba(35,230,242,0.10)",
+              border: "1px solid rgba(35,230,242,0.35)",
+            }}
+          >
+            <AppWindow
+              className="w-5 h-5"
+              style={{ color: "oklch(0.80 0.18 200)" }}
+            />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Settings</h1>
-            <p className="text-sm text-muted-foreground">
-              Customize your FaceAttend app
+            <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+              Settings
+            </h1>
+            <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+              System Configuration
             </p>
           </div>
         </div>
 
         {/* 1. App Identity */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <AppWindow className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              App Identity
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={AppWindow} title="App Identity" />
           <div className="p-4 space-y-4">
             <div className="space-y-1.5">
               <Label
                 htmlFor="appName"
-                className="text-xs uppercase tracking-wider text-muted-foreground font-semibold"
+                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
               >
                 App Name
               </Label>
@@ -177,16 +215,22 @@ export default function Settings() {
                 id="appName"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
-                className="bg-background border-border"
+                className={hudInput}
                 data-ocid="settings.app_name.input"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 App Icon
               </Label>
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 rounded-xl border border-border bg-muted/30 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div
+                  className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
+                  style={{
+                    background: "rgba(35,230,242,0.06)",
+                    border: "1px solid rgba(35,230,242,0.25)",
+                  }}
+                >
                   {appIconPreview ? (
                     <img
                       src={appIconPreview}
@@ -194,7 +238,10 @@ export default function Settings() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <AppWindow className="w-7 h-7 text-muted-foreground opacity-40" />
+                    <AppWindow
+                      className="w-7 h-7 opacity-30"
+                      style={{ color: "oklch(0.80 0.18 200)" }}
+                    />
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -202,7 +249,11 @@ export default function Settings() {
                     variant="outline"
                     size="sm"
                     onClick={() => iconInputRef.current?.click()}
-                    className="text-xs"
+                    className="text-xs font-orbitron uppercase tracking-wider"
+                    style={{
+                      borderColor: "rgba(35,230,242,0.35)",
+                      color: "oklch(0.80 0.18 200)",
+                    }}
                     data-ocid="settings.upload_icon.button"
                   >
                     <Upload className="w-3.5 h-3.5 mr-1.5" />
@@ -213,7 +264,8 @@ export default function Settings() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setAppIconPreview(null)}
-                      className="text-xs text-destructive hover:text-destructive"
+                      className="text-xs"
+                      style={{ color: "oklch(0.62 0.22 15)" }}
                       data-ocid="settings.remove_icon.button"
                     >
                       <X className="w-3.5 h-3.5 mr-1" />
@@ -231,20 +283,19 @@ export default function Settings() {
               />
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 2. Theme */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <Palette className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              Theme
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={Palette} title="Theme" />
           <div className="p-4 space-y-4">
-            {/* Theme pills */}
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 Theme
               </Label>
               <div className="grid grid-cols-3 gap-2">
@@ -253,11 +304,25 @@ export default function Settings() {
                     key={t.id}
                     type="button"
                     onClick={() => setTheme(t.id)}
-                    className={`px-3 py-2 rounded-full text-sm font-medium border transition-all ${
-                      theme === t.id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border text-foreground hover:bg-muted/40"
-                    }`}
+                    className="px-3 py-2 rounded-lg text-xs font-orbitron uppercase tracking-wider border transition-all"
+                    style={{
+                      background:
+                        theme === t.id
+                          ? "oklch(0.80 0.18 200)"
+                          : "rgba(8,18,28,0.55)",
+                      color:
+                        theme === t.id
+                          ? "oklch(0.08 0.015 250)"
+                          : "oklch(0.60 0.05 220)",
+                      borderColor:
+                        theme === t.id
+                          ? "rgba(35,230,242,0.5)"
+                          : "rgba(35,230,242,0.15)",
+                      boxShadow:
+                        theme === t.id
+                          ? "0 0 10px rgba(35,230,242,0.25)"
+                          : "none",
+                    }}
                     data-ocid="settings.theme.toggle"
                   >
                     {t.label}
@@ -265,8 +330,6 @@ export default function Settings() {
                 ))}
               </div>
             </div>
-
-            {/* Dark Mode toggle */}
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Dark Mode</Label>
               <Switch
@@ -275,10 +338,8 @@ export default function Settings() {
                 data-ocid="settings.dark_mode.switch"
               />
             </div>
-
-            {/* Accent Color */}
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 Accent Color
               </Label>
               <div className="flex items-center gap-3">
@@ -287,17 +348,25 @@ export default function Settings() {
                     key={color}
                     type="button"
                     onClick={() => setAccentColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${
-                      accentColor === color
-                        ? "border-foreground scale-110"
-                        : "border-transparent"
-                    }`}
-                    style={{ backgroundColor: color }}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === color ? "scale-110" : ""}`}
+                    style={{
+                      backgroundColor: color,
+                      borderColor:
+                        accentColor === color
+                          ? "oklch(0.94 0.01 200)"
+                          : "transparent",
+                    }}
                     aria-label={color}
                     data-ocid="settings.accent_color.toggle"
                   />
                 ))}
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/30 border border-border">
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+                  style={{
+                    background: "rgba(35,230,242,0.05)",
+                    border: "1px solid rgba(35,230,242,0.15)",
+                  }}
+                >
                   <div
                     className="w-4 h-4 rounded-full border border-border"
                     style={{ backgroundColor: accentColor }}
@@ -317,24 +386,25 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 3. Background */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <Image className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              Background
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={Image} title="Background" />
           <div className="p-4 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 Background Type
               </Label>
               <Select value={bgType} onValueChange={setBgType}>
                 <SelectTrigger
-                  className="bg-background border-border"
+                  className={hudInput}
+                  style={selectStyle}
                   data-ocid="settings.bg_type.select"
                 >
                   <SelectValue />
@@ -352,8 +422,12 @@ export default function Settings() {
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full font-orbitron uppercase text-xs tracking-wider"
                   onClick={() => bgInputRef.current?.click()}
+                  style={{
+                    borderColor: "rgba(35,230,242,0.35)",
+                    color: "oklch(0.80 0.18 200)",
+                  }}
                   data-ocid="settings.upload_bg.button"
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -361,8 +435,11 @@ export default function Settings() {
                 </Button>
                 {bgImagePreview && (
                   <div
-                    className="relative rounded-lg overflow-hidden border border-border"
-                    style={{ aspectRatio: "16/5" }}
+                    className="relative rounded-lg overflow-hidden border"
+                    style={{
+                      aspectRatio: "16/5",
+                      borderColor: "rgba(35,230,242,0.25)",
+                    }}
                   >
                     <img
                       src={bgImagePreview}
@@ -389,24 +466,25 @@ export default function Settings() {
               </div>
             )}
           </div>
-        </section>
+        </motion.section>
 
         {/* 4. Typography */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <Type className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              Typography
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={Type} title="Typography" />
           <div className="p-4">
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 Font Size
               </Label>
               <Select value={fontSize} onValueChange={setFontSize}>
                 <SelectTrigger
-                  className="bg-background border-border"
+                  className={hudInput}
+                  style={selectStyle}
                   data-ocid="settings.font_size.select"
                 >
                   <SelectValue />
@@ -421,25 +499,25 @@ export default function Settings() {
               </Select>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* 5. Data Export */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <Webhook className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              Data Export
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={Webhook} title="Data Export" />
           <div className="p-4 space-y-2">
-            <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+            <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
               Webhook URL
             </Label>
             <Input
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
               placeholder="https://your-ngrok-url.ngrok.io/attendance"
-              className="bg-background border-border font-mono text-sm"
+              className={`${hudInput} font-mono text-sm`}
               data-ocid="settings.webhook_url.input"
             />
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -447,26 +525,31 @@ export default function Settings() {
               attendance data automatically after each face verification.
             </p>
           </div>
-        </section>
+        </motion.section>
 
         {/* 6. Install on Phone */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-            <Phone className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm tracking-wide uppercase text-muted-foreground">
-              Install on Phone
-            </span>
-          </div>
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="hud-panel overflow-hidden"
+        >
+          <SectionHeader icon={Phone} title="Install on Phone" />
           <div className="p-4 space-y-4">
             <p className="text-sm text-muted-foreground">
               FaceAttend can be installed directly on your phone as an app — no
               app store needed.
             </p>
-
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">A</span>
+                <div
+                  className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold font-orbitron"
+                  style={{
+                    background: "rgba(35,230,242,0.12)",
+                    color: "oklch(0.80 0.18 200)",
+                  }}
+                >
+                  A
                 </div>
                 <span className="text-sm font-semibold">Android (Chrome)</span>
               </div>
@@ -476,7 +559,7 @@ export default function Settings() {
                 <li>
                   Tap{" "}
                   <span className="font-medium text-foreground">
-                    "Add to Home screen"
+                    &quot;Add to Home screen&quot;
                   </span>
                 </li>
                 <li>
@@ -485,11 +568,16 @@ export default function Settings() {
                 </li>
               </ol>
             </div>
-
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">i</span>
+                <div
+                  className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold font-orbitron"
+                  style={{
+                    background: "rgba(35,230,242,0.12)",
+                    color: "oklch(0.80 0.18 200)",
+                  }}
+                >
+                  i
                 </div>
                 <span className="text-sm font-semibold">iPhone (Safari)</span>
               </div>
@@ -499,7 +587,7 @@ export default function Settings() {
                 <li>
                   Scroll down and tap{" "}
                   <span className="font-medium text-foreground">
-                    "Add to Home Screen"
+                    &quot;Add to Home Screen&quot;
                   </span>
                 </li>
                 <li>
@@ -508,18 +596,26 @@ export default function Settings() {
                 </li>
               </ol>
             </div>
-
-            <p className="text-xs text-muted-foreground border-t border-border pt-3">
+            <p
+              className="text-xs text-muted-foreground pt-3"
+              style={{ borderTop: "1px solid rgba(35,230,242,0.12)" }}
+            >
               Once installed, it will appear on your home screen with its own
               icon, just like a regular app.
             </p>
           </div>
-        </section>
+        </motion.section>
 
         {/* Save Button */}
         <Button
-          className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90"
+          className="w-full h-12 text-xs font-orbitron uppercase tracking-widest hud-glow-pulse"
           onClick={handleSave}
+          style={{
+            background: "oklch(0.80 0.18 200)",
+            color: "oklch(0.08 0.015 250)",
+            boxShadow: "0 0 24px rgba(35,230,242,0.30)",
+            border: "1px solid rgba(35,230,242,0.5)",
+          }}
           data-ocid="settings.save_settings.button"
         >
           <Save className="w-4 h-4 mr-2" />

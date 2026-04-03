@@ -87,7 +87,6 @@ function formatDateDisplay(day: bigint, month: bigint, year: bigint): string {
 
 function parseNSQFBatch(batch: string): { level: string; semester: string } {
   if (!batch) return { level: "—", semester: "—" };
-  // Format: "NSQF Level-III - 1st Semester"
   const dashIdx = batch.indexOf(" - ");
   if (dashIdx !== -1) {
     const levelPart = batch
@@ -100,45 +99,95 @@ function parseNSQFBatch(batch: string): { level: string; semester: string } {
   return { level: batch, semester: "—" };
 }
 
+// ── 3D Stat Card ─────────────────────────────────────────────────────
+
 function StatCard({
   label,
   value,
   icon: Icon,
-  color,
-}: { label: string; value: string | number; icon: any; color: string }) {
+  glowColor,
+  delay = 0,
+}: {
+  label: string;
+  value: string | number;
+  icon: any;
+  glowColor: string;
+  delay?: number;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    card.style.transform = `perspective(800px) rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg)`;
+    card.style.transition = "transform 0.1s";
+  };
+
+  const handleMouseLeave = () => {
+    const card = cardRef.current;
+    if (!card) return;
+    card.style.transform = "perspective(800px) rotateX(0) rotateY(0)";
+    card.style.transition = "transform 0.4s";
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl bg-card border border-border p-4 flex items-start gap-3"
+      transition={{ duration: 0.4, delay }}
+      style={{ perspective: "800px" }}
     >
       <div
-        className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}
+        ref={cardRef}
+        className="hud-panel p-4 flex items-start gap-3 cursor-default"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          boxShadow: `0 0 20px ${glowColor}15, inset 0 0 40px ${glowColor}04`,
+          borderColor: `${glowColor}40`,
+          willChange: "transform",
+        }}
       >
-        <Icon className="w-4 h-4" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold font-mono">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
+        <div
+          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            background: `${glowColor}18`,
+            border: `1px solid ${glowColor}40`,
+            boxShadow: `0 0 10px ${glowColor}25`,
+          }}
+        >
+          <Icon className="w-4 h-4" style={{ color: glowColor }} />
+        </div>
+        <div>
+          <p
+            className="text-2xl font-bold font-mono"
+            style={{ color: glowColor, textShadow: `0 0 12px ${glowColor}50` }}
+          >
+            {value}
+          </p>
+          <p className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground">
+            {label}
+          </p>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-// ─── EditPersonDialog ────────────────────────────────────────────────────────
+// ── EditPersonDialog ─────────────────────────────────────────────────────
 
 function EditPersonDialog({
   person,
   open,
   onClose,
-}: {
-  person: PersonSummary | null;
-  open: boolean;
-  onClose: () => void;
-}) {
+}: { person: PersonSummary | null; open: boolean; onClose: () => void }) {
   const updatePerson = useUpdatePerson();
   const updateDescriptor = useUpdatePersonDescriptor();
-
   const [name, setName] = useState("");
   const [studentId, setStudentId] = useState("");
   const [employeeId, setEmployeeId] = useState("");
@@ -153,7 +202,6 @@ function EditPersonDialog({
     "idle" | "loading" | "ready" | "error"
   >("idle");
   const cameraReady = useRef(false);
-
   const camera = useCamera({ facingMode: "user" });
   const isStudent = person ? String(person.personType) === "student" : false;
 
@@ -276,77 +324,121 @@ function EditPersonDialog({
   ]);
 
   const isSaving = updatePerson.isPending || updateDescriptor.isPending;
+  const hudInput =
+    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_8px_rgba(35,230,242,0.2)] text-foreground";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
         className="max-w-md"
+        style={{
+          background: "rgba(8,18,28,0.95)",
+          border: "1px solid rgba(35,230,242,0.30)",
+        }}
         data-ocid="dashboard.edit_person.dialog"
       >
         <DialogHeader>
-          <DialogTitle>Edit Person</DialogTitle>
+          <DialogTitle className="font-orbitron uppercase tracking-wider text-sm neon-text-cyan">
+            Edit Person
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
-            <Label htmlFor="edit-name">Full Name *</Label>
+            <Label
+              htmlFor="edit-name"
+              className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+            >
+              Full Name *
+            </Label>
             <Input
               id="edit-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter full name"
+              className={hudInput}
               data-ocid="dashboard.edit_person_name.input"
             />
           </div>
           {isStudent ? (
             <>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-sid">Student ID</Label>
+                <Label
+                  htmlFor="edit-sid"
+                  className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                >
+                  Student ID
+                </Label>
                 <Input
                   id="edit-sid"
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   placeholder="Optional"
+                  className={hudInput}
                   data-ocid="dashboard.edit_student_id.input"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit-roll">Roll No</Label>
+                <Label
+                  htmlFor="edit-roll"
+                  className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                >
+                  Roll No
+                </Label>
                 <Input
                   id="edit-roll"
                   value={rollNo}
                   onChange={(e) => setRollNo(e.target.value)}
                   placeholder="Optional"
+                  className={hudInput}
                   data-ocid="dashboard.edit_roll_no.input"
                 />
               </div>
             </>
           ) : (
             <div className="space-y-1.5">
-              <Label htmlFor="edit-eid">Employee ID</Label>
+              <Label
+                htmlFor="edit-eid"
+                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+              >
+                Employee ID
+              </Label>
               <Input
                 id="edit-eid"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 placeholder="Optional"
+                className={hudInput}
                 data-ocid="dashboard.edit_employee_id.input"
               />
             </div>
           )}
           {isStudent && (
             <div className="space-y-1.5">
-              <Label htmlFor="edit-batch">NSQF Level / Semester</Label>
+              <Label
+                htmlFor="edit-batch"
+                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+              >
+                NSQF Level / Semester
+              </Label>
               <Input
                 id="edit-batch"
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
                 placeholder="e.g. NSQF Level-III - 1st Semester"
+                className={hudInput}
                 data-ocid="dashboard.edit_batch.input"
               />
             </div>
           )}
-          <div className="border border-border rounded-lg p-3 space-y-2">
+          <div
+            className="rounded-lg p-3 space-y-2"
+            style={{
+              border: "1px solid rgba(35,230,242,0.20)",
+              background: "rgba(8,18,28,0.55)",
+            }}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
                 Face Photo
               </span>
               <Button
@@ -354,6 +446,14 @@ function EditPersonDialog({
                 size="sm"
                 variant={showCamera ? "destructive" : "outline"}
                 onClick={() => setShowCamera((v) => !v)}
+                style={
+                  !showCamera
+                    ? {
+                        borderColor: "rgba(35,230,242,0.35)",
+                        color: "oklch(0.80 0.18 200)",
+                      }
+                    : undefined
+                }
               >
                 <Camera className="w-3.5 h-3.5 mr-1" />
                 {showCamera
@@ -364,7 +464,7 @@ function EditPersonDialog({
               </Button>
             </div>
             {capturedDescriptor && !showCamera && (
-              <div className="flex items-center gap-1.5 text-xs text-green-500">
+              <div className="flex items-center gap-1.5 text-xs neon-text-green">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 New face captured — will be saved
               </div>
@@ -394,12 +494,15 @@ function EditPersonDialog({
                     <SwitchCamera className="w-4 h-4" />
                   </button>
                   {aiStatus === "loading" && (
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs text-yellow-300">
+                    <div
+                      className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs"
+                      style={{ color: "oklch(0.80 0.18 70)" }}
+                    >
                       <Loader2 className="w-3 h-3 animate-spin" /> Loading AI...
                     </div>
                   )}
                   {aiStatus === "ready" && (
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs text-green-300">
+                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs neon-text-green">
                       <CheckCircle2 className="w-3 h-3" /> AI Active
                     </div>
                   )}
@@ -411,6 +514,10 @@ function EditPersonDialog({
                     className="flex-1"
                     onClick={handleCapture}
                     disabled={isCapturing || !camera.isActive}
+                    style={{
+                      background: "oklch(0.80 0.18 200)",
+                      color: "oklch(0.08 0.015 250)",
+                    }}
                     data-ocid="dashboard.edit_person.capture_button"
                   >
                     {isCapturing ? (
@@ -443,6 +550,10 @@ function EditPersonDialog({
           <Button
             variant="outline"
             onClick={onClose}
+            style={{
+              borderColor: "rgba(35,230,242,0.30)",
+              color: "oklch(0.60 0.05 220)",
+            }}
             data-ocid="dashboard.edit_person.cancel_button"
           >
             Cancel
@@ -450,6 +561,10 @@ function EditPersonDialog({
           <Button
             onClick={handleSave}
             disabled={isSaving || !name.trim()}
+            style={{
+              background: "oklch(0.80 0.18 200)",
+              color: "oklch(0.08 0.015 250)",
+            }}
             data-ocid="dashboard.edit_person.save_button"
           >
             {isSaving ? (
@@ -466,19 +581,14 @@ function EditPersonDialog({
   );
 }
 
-// ─── DeletePersonDialog ──────────────────────────────────────────────────────
+// ── DeletePersonDialog ─────────────────────────────────────────────────────
 
 function DeletePersonDialog({
   person,
   open,
   onClose,
-}: {
-  person: PersonSummary | null;
-  open: boolean;
-  onClose: () => void;
-}) {
+}: { person: PersonSummary | null; open: boolean; onClose: () => void }) {
   const deletePerson = useDeletePerson();
-
   const handleDelete = useCallback(async () => {
     if (!person) return;
     try {
@@ -492,16 +602,30 @@ function DeletePersonDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <AlertDialogContent data-ocid="dashboard.delete_person.dialog">
+      <AlertDialogContent
+        style={{
+          background: "rgba(8,18,28,0.95)",
+          border: "1px solid rgba(255,90,95,0.30)",
+        }}
+        data-ocid="dashboard.delete_person.dialog"
+      >
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {person?.name}?</AlertDialogTitle>
+          <AlertDialogTitle
+            className="font-orbitron uppercase tracking-wider text-sm"
+            style={{ color: "oklch(0.62 0.22 15)" }}
+          >
+            Delete {person?.name}?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             This will also permanently delete all their attendance records. This
             cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-ocid="dashboard.delete_person.cancel_button">
+          <AlertDialogCancel
+            style={{ borderColor: "rgba(35,230,242,0.25)" }}
+            data-ocid="dashboard.delete_person.cancel_button"
+          >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
@@ -523,7 +647,7 @@ function DeletePersonDialog({
   );
 }
 
-// ─── ManagePersons ───────────────────────────────────────────────────────────
+// ── ManagePersons ──────────────────────────────────────────────────────────
 
 function ManagePersons() {
   const { data: persons = [], isLoading } = useGetAllPersons();
@@ -534,48 +658,60 @@ function ManagePersons() {
     <div>
       {isLoading ? (
         <div
-          className="text-center py-16 text-muted-foreground"
+          className="text-center py-16 text-muted-foreground font-mono text-sm"
           data-ocid="dashboard.people.loading_state"
         >
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          Loading persons...
+          <div
+            className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
+            style={{
+              borderColor: "rgba(35,230,242,0.5)",
+              borderTopColor: "transparent",
+            }}
+          />
+          Loading personnel...
         </div>
       ) : persons.length === 0 ? (
         <div
           className="text-center py-16 text-muted-foreground"
           data-ocid="dashboard.people.empty_state"
         >
-          <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No registered persons</p>
-          <p className="text-xs mt-1">Register a person to manage them here</p>
+          <Users
+            className="w-10 h-10 mx-auto mb-3 opacity-30"
+            style={{ color: "oklch(0.80 0.18 200)" }}
+          />
+          <p className="font-orbitron uppercase text-xs tracking-wider">
+            No registered personnel
+          </p>
+          <p className="text-xs mt-1 text-muted-foreground">
+            Register a person to manage them here
+          </p>
         </div>
       ) : (
         <div
-          className="rounded-xl border border-border overflow-hidden"
+          className="rounded-xl overflow-hidden"
+          style={{ border: "1px solid rgba(35,230,242,0.20)" }}
           data-ocid="dashboard.people.table"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-muted/50 border-b border-border">
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    #
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    ID
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    Batch / Roll
-                  </th>
-                  <th className="px-4 py-3 text-left font-semibold text-foreground">
-                    Actions
-                  </th>
+                <tr
+                  style={{
+                    background: "rgba(35,230,242,0.05)",
+                    borderBottom: "1px solid rgba(35,230,242,0.15)",
+                  }}
+                >
+                  {["#", "Name", "Type", "ID", "Batch / Roll", "Actions"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="px-4 py-3 text-left font-orbitron text-xs uppercase tracking-wider"
+                        style={{ color: "oklch(0.80 0.18 200)" }}
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -587,10 +723,20 @@ function ManagePersons() {
                   return (
                     <tr
                       key={String(p.id)}
-                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+                      className="transition-colors"
+                      style={{
+                        borderBottom: "1px solid rgba(35,230,242,0.08)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "rgba(35,230,242,0.03)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                      }}
                       data-ocid={`dashboard.people.row.item.${i + 1}`}
                     >
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {i + 1}
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">
@@ -598,26 +744,46 @@ function ManagePersons() {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          className="px-2 py-0.5 rounded-full text-xs font-orbitron uppercase tracking-wide"
+                          style={
                             isStudent
-                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                              : "bg-violet-500/20 text-violet-400 border border-violet-500/30"
-                          }`}
+                              ? {
+                                  background: "rgba(35,230,242,0.10)",
+                                  color: "oklch(0.80 0.18 200)",
+                                  border: "1px solid rgba(35,230,242,0.25)",
+                                }
+                              : {
+                                  background: "rgba(114,64,255,0.10)",
+                                  color: "oklch(0.72 0.2 280)",
+                                  border: "1px solid rgba(114,64,255,0.25)",
+                                }
+                          }
                         >
                           {isStudent ? "Student" : "Employee"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-foreground">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {idValue || "—"}
                       </td>
-                      <td className="px-4 py-3 text-foreground">{batchRoll}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                        {batchRoll}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary"
+                            className="h-7 w-7 p-0"
                             onClick={() => setEditTarget(p)}
+                            style={{ color: "oklch(0.60 0.05 220)" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color =
+                                "oklch(0.80 0.18 200)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color =
+                                "oklch(0.60 0.05 220)";
+                            }}
                             data-ocid={`dashboard.people.edit_button.${i + 1}`}
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -625,8 +791,17 @@ function ManagePersons() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            className="h-7 w-7 p-0"
                             onClick={() => setDeleteTarget(p)}
+                            style={{ color: "oklch(0.60 0.05 220)" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color =
+                                "oklch(0.62 0.22 15)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color =
+                                "oklch(0.60 0.05 220)";
+                            }}
                             data-ocid={`dashboard.people.delete_button.${i + 1}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -639,8 +814,14 @@ function ManagePersons() {
               </tbody>
             </table>
           </div>
-          <div className="px-4 py-2 bg-muted/30 text-xs text-muted-foreground border-t border-border">
-            {persons.length} person{persons.length !== 1 ? "s" : ""} registered
+          <div
+            className="px-4 py-2 text-xs font-mono text-muted-foreground"
+            style={{
+              borderTop: "1px solid rgba(35,230,242,0.10)",
+              background: "rgba(35,230,242,0.02)",
+            }}
+          >
+            {persons.length} personnel registered
           </div>
         </div>
       )}
@@ -658,11 +839,11 @@ function ManagePersons() {
   );
 }
 
-// ─── Dashboard ───────────────────────────────────────────────────────────────
+// ── Dashboard ───────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const today = new Date();
-
+  const [activeTab, setActiveTab] = useState("attendance");
   const { data: stats, isLoading: statsLoading } = useGetStats();
   const { data: attendance = [], isLoading: attLoading } =
     useGetAttendanceRecords();
@@ -682,10 +863,8 @@ export default function Dashboard() {
 
   const updateAttendance = useUpdateAttendance();
   const deleteAttendance = useDeleteAttendance();
-
   const [dateFilter, setDateFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
-
   const [editAtt, setEditAtt] = useState<AttendanceRecord | null>(null);
   const [editAttForm, setEditAttForm] = useState({
     name: "",
@@ -694,7 +873,6 @@ export default function Dashboard() {
     monthStr: "",
     timeStr: "",
   });
-
   const [deleteAttId, setDeleteAttId] = useState<bigint | null>(null);
 
   const filteredAttendance = attendance.filter((r) => {
@@ -786,18 +964,41 @@ export default function Dashboard() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }, [attendance, persons]);
 
+  const hudInput =
+    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_8px_rgba(35,230,242,0.2)] text-foreground";
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-          <LayoutDashboard className="w-5 h-5 text-primary" />
+    <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center gap-3 mb-8"
+      >
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{
+            background: "rgba(35,230,242,0.10)",
+            border: "1px solid rgba(35,230,242,0.35)",
+          }}
+        >
+          <LayoutDashboard
+            className="w-5 h-5"
+            style={{ color: "oklch(0.80 0.18 200)" }}
+          />
         </div>
         <div>
-          <h1 className="text-xl font-bold">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">{formatDate(today)}</p>
+          <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+            Command Center
+          </h1>
+          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            {formatDate(today)}
+          </p>
         </div>
-      </div>
+      </motion.div>
 
+      {/* Stat cards */}
       {statsLoading ? (
         <div
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
@@ -813,65 +1014,103 @@ export default function Dashboard() {
             label="Total People"
             value={Number(stats?.totalPersons ?? 0)}
             icon={Users}
-            color="bg-primary/20 text-primary"
+            glowColor="#23E6F2"
+            delay={0}
           />
           <StatCard
             label="Total Attendance"
             value={Number(stats?.totalAttendance ?? 0)}
             icon={CalendarCheck}
-            color="bg-chart-2/20 text-chart-2"
+            glowColor="#45FF7A"
+            delay={0.05}
           />
           <StatCard
             label="Today's Check-ins"
             value={Number(stats?.todayCheckins ?? 0)}
             icon={Clock}
-            color="bg-chart-3/20 text-chart-3"
+            glowColor="#FFD700"
+            delay={0.1}
           />
           <StatCard
             label="Active Months"
             value={stats?.activeMonths.length ?? 0}
             icon={Layers}
-            color="bg-chart-5/20 text-chart-5"
+            glowColor="#9B5DE5"
+            delay={0.15}
           />
         </div>
       )}
 
-      <Tabs defaultValue="attendance">
+      {/* Main tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList
-          className="bg-card border border-border mb-6"
+          className="mb-6"
+          style={{
+            background: "rgba(8,18,28,0.55)",
+            border: "1px solid rgba(35,230,242,0.20)",
+            borderRadius: "8px",
+            padding: "4px",
+          }}
           data-ocid="dashboard.tab"
         >
-          <TabsTrigger value="attendance" data-ocid="dashboard.attendance.tab">
+          <TabsTrigger
+            value="attendance"
+            className="font-orbitron uppercase text-xs tracking-wider transition-all"
+            style={
+              activeTab === "attendance"
+                ? {
+                    background: "oklch(0.80 0.18 200)",
+                    color: "oklch(0.08 0.015 250)",
+                    boxShadow: "0 0 10px rgba(35,230,242,0.3)",
+                  }
+                : { color: "oklch(0.72 0.04 220)" }
+            }
+            data-ocid="dashboard.attendance.tab"
+          >
             Attendance Records
           </TabsTrigger>
-          <TabsTrigger value="people" data-ocid="dashboard.people.tab">
+          <TabsTrigger
+            value="people"
+            className="font-orbitron uppercase text-xs tracking-wider transition-all"
+            style={
+              activeTab === "people"
+                ? {
+                    background: "oklch(0.80 0.18 200)",
+                    color: "oklch(0.08 0.015 250)",
+                    boxShadow: "0 0 10px rgba(35,230,242,0.3)",
+                  }
+                : { color: "oklch(0.72 0.04 220)" }
+            }
+            data-ocid="dashboard.people.tab"
+          >
             Manage People
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="attendance">
-          <div className="flex flex-wrap gap-3 mb-4">
+          {/* Filters + CSV */}
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
             <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                Filter by date
+              <Label className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                Date
               </Label>
               <Input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="h-8 text-sm bg-card border-border w-40"
+                className={`h-8 text-sm w-40 ${hudInput}`}
                 data-ocid="dashboard.date_filter.input"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Label className="text-xs text-muted-foreground whitespace-nowrap">
-                Filter by month
+              <Label className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                Month
               </Label>
               <Input
                 type="month"
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
-                className="h-8 text-sm bg-card border-border w-36"
+                className={`h-8 text-sm w-36 ${hudInput}`}
                 data-ocid="dashboard.month_filter.input"
               />
             </div>
@@ -879,11 +1118,12 @@ export default function Dashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs"
+                className="h-8 text-xs font-orbitron uppercase tracking-wider"
                 onClick={() => {
                   setDateFilter("");
                   setMonthFilter("");
                 }}
+                style={{ color: "oklch(0.60 0.05 220)" }}
               >
                 Clear
               </Button>
@@ -894,7 +1134,11 @@ export default function Dashboard() {
                 size="sm"
                 onClick={downloadCSV}
                 disabled={attendance.length === 0}
-                className="flex items-center gap-2 h-8"
+                className="flex items-center gap-2 h-8 font-orbitron uppercase text-xs tracking-wider"
+                style={{
+                  borderColor: "rgba(35,230,242,0.35)",
+                  color: "oklch(0.80 0.18 200)",
+                }}
                 data-ocid="dashboard.csv_download.button"
               >
                 <Download className="w-4 h-4" />
@@ -914,50 +1158,52 @@ export default function Dashboard() {
             </div>
           ) : filteredAttendance.length === 0 ? (
             <div
-              className="rounded-xl border border-dashed border-border p-10 text-center"
+              className="rounded-xl border-dashed p-10 text-center hud-panel"
+              style={{ borderStyle: "dashed" }}
               data-ocid="dashboard.attendance.empty_state"
             >
-              <CalendarCheck className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">
+              <CalendarCheck
+                className="w-10 h-10 mx-auto mb-2 opacity-30"
+                style={{ color: "oklch(0.80 0.18 200)" }}
+              />
+              <p className="text-muted-foreground text-sm font-mono">
                 No attendance records found
               </p>
             </div>
           ) : (
             <div
-              className="rounded-xl border border-border overflow-hidden"
+              className="rounded-xl overflow-hidden"
+              style={{ border: "1px solid rgba(35,230,242,0.20)" }}
               data-ocid="dashboard.attendance.table"
             >
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-card hover:bg-card border-border">
-                    <TableHead className="text-muted-foreground">#</TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Name
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Type
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Roll No
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      NSQF Level
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Semester
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Slot
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Time
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Date
-                    </TableHead>
-                    <TableHead className="text-muted-foreground">
-                      Actions
-                    </TableHead>
+                  <TableRow
+                    style={{
+                      background: "rgba(35,230,242,0.05)",
+                      borderBottom: "1px solid rgba(35,230,242,0.15)",
+                    }}
+                  >
+                    {[
+                      "#",
+                      "Name",
+                      "Type",
+                      "Roll No",
+                      "NSQF Level",
+                      "Semester",
+                      "Slot",
+                      "Time",
+                      "Date",
+                      "Actions",
+                    ].map((h) => (
+                      <TableHead
+                        key={h}
+                        className="font-orbitron text-xs uppercase tracking-wider"
+                        style={{ color: "oklch(0.80 0.18 200)" }}
+                      >
+                        {h}
+                      </TableHead>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -971,39 +1217,56 @@ export default function Dashboard() {
                     return (
                       <TableRow
                         key={String(r.id)}
-                        className="border-border"
+                        style={{
+                          borderBottom: "1px solid rgba(35,230,242,0.08)",
+                        }}
+                        className="hover:bg-primary/5 transition-colors"
                         data-ocid={`dashboard.attendance.row.item.${idx + 1}`}
                       >
-                        <TableCell className="text-muted-foreground text-xs font-mono">
+                        <TableCell className="font-mono text-xs text-muted-foreground">
                           {idx + 1}
                         </TableCell>
-                        <TableCell className="font-medium">{r.name}</TableCell>
+                        <TableCell className="font-medium text-foreground">
+                          {r.name}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={
+                            className="font-orbitron text-xs uppercase tracking-wide"
+                            style={
                               isStudent
-                                ? "border-primary/40 text-primary"
-                                : "border-chart-2/40 text-chart-2"
+                                ? {
+                                    borderColor: "rgba(35,230,242,0.35)",
+                                    color: "oklch(0.80 0.18 200)",
+                                  }
+                                : {
+                                    borderColor: "rgba(114,64,255,0.35)",
+                                    color: "oklch(0.72 0.2 280)",
+                                  }
                             }
                           >
                             {isStudent ? "Student" : "Employee"}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-sm text-black dark:text-foreground">
+                        <TableCell className="font-mono text-sm text-foreground">
                           {personRollNoMap.get(r.personId.toString()) || "—"}
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-black dark:text-foreground">
+                        <TableCell className="font-mono text-sm font-medium text-foreground">
                           {level}
                         </TableCell>
-                        <TableCell className="text-sm text-black dark:text-foreground">
+                        <TableCell className="font-mono text-sm text-foreground">
                           {semester}
                         </TableCell>
-                        <TableCell className="text-sm">{r.slot}</TableCell>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="text-sm text-muted-foreground">
+                          {r.slot}
+                        </TableCell>
+                        <TableCell
+                          className="font-mono text-sm"
+                          style={{ color: "oklch(0.80 0.18 200)" }}
+                        >
                           {r.timeStr}
                         </TableCell>
-                        <TableCell className="font-mono text-sm">
+                        <TableCell className="font-mono text-sm text-muted-foreground">
                           {r.dateStr}
                         </TableCell>
                         <TableCell>
@@ -1011,7 +1274,7 @@ export default function Dashboard() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              className="h-7 w-7 text-muted-foreground hover:text-primary"
                               onClick={() => openEditAtt(r)}
                               data-ocid={`dashboard.attendance.edit_button.${idx + 1}`}
                             >
@@ -1045,32 +1308,41 @@ export default function Dashboard() {
       {/* Edit Attendance Dialog */}
       <Dialog open={!!editAtt} onOpenChange={(o) => !o && setEditAtt(null)}>
         <DialogContent
-          className="bg-card border-border"
+          style={{
+            background: "rgba(8,18,28,0.95)",
+            border: "1px solid rgba(35,230,242,0.25)",
+          }}
           data-ocid="dashboard.edit_attendance.dialog"
         >
           <DialogHeader>
-            <DialogTitle>Edit Attendance Record</DialogTitle>
+            <DialogTitle className="font-orbitron uppercase tracking-wider text-sm neon-text-cyan">
+              Edit Attendance Record
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Name</Label>
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                Name
+              </Label>
               <Input
                 value={editAttForm.name}
                 onChange={(e) =>
                   setEditAttForm((p) => ({ ...p, name: e.target.value }))
                 }
-                className="bg-background border-border"
+                className={hudInput}
                 data-ocid="dashboard.edit_name.input"
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Slot</Label>
+              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                Slot
+              </Label>
               <select
                 value={editAttForm.slot}
                 onChange={(e) =>
                   setEditAttForm((p) => ({ ...p, slot: e.target.value }))
                 }
-                className="w-full h-10 rounded-md border border-border bg-background px-3 text-sm"
+                className="w-full h-10 rounded-md px-3 text-sm bg-input/50 border border-border text-foreground"
                 data-ocid="dashboard.edit_slot.select"
               >
                 {SLOTS.map((s) => (
@@ -1082,7 +1354,9 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Date</Label>
+                <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                  Date
+                </Label>
                 <Input
                   type="date"
                   value={editAttForm.dateStr}
@@ -1094,19 +1368,21 @@ export default function Dashboard() {
                       monthStr: d.slice(0, 7),
                     }));
                   }}
-                  className="bg-background border-border"
+                  className={hudInput}
                   data-ocid="dashboard.edit_date.input"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Time</Label>
+                <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                  Time
+                </Label>
                 <Input
                   type="time"
                   value={editAttForm.timeStr}
                   onChange={(e) =>
                     setEditAttForm((p) => ({ ...p, timeStr: e.target.value }))
                   }
-                  className="bg-background border-border"
+                  className={hudInput}
                   data-ocid="dashboard.edit_time.input"
                 />
               </div>
@@ -1116,6 +1392,10 @@ export default function Dashboard() {
             <Button
               variant="outline"
               onClick={() => setEditAtt(null)}
+              style={{
+                borderColor: "rgba(35,230,242,0.25)",
+                color: "oklch(0.60 0.05 220)",
+              }}
               data-ocid="dashboard.edit_attendance.cancel_button"
             >
               Cancel
@@ -1123,6 +1403,10 @@ export default function Dashboard() {
             <Button
               onClick={handleSaveAttendance}
               disabled={updateAttendance.isPending}
+              style={{
+                background: "oklch(0.80 0.18 200)",
+                color: "oklch(0.08 0.015 250)",
+              }}
               data-ocid="dashboard.edit_attendance.save_button"
             >
               {updateAttendance.isPending ? (
@@ -1135,18 +1419,27 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Attendance */}
+      {/* Delete Attendance Dialog */}
       <Dialog
         open={deleteAttId !== null}
         onOpenChange={(o) => !o && setDeleteAttId(null)}
       >
         <DialogContent
-          className="bg-card border-border"
+          style={{
+            background: "rgba(8,18,28,0.95)",
+            border: "1px solid rgba(255,90,95,0.25)",
+          }}
           data-ocid="dashboard.delete_attendance.dialog"
         >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-destructive" />
+            <DialogTitle
+              className="flex items-center gap-2 font-orbitron uppercase tracking-wider text-sm"
+              style={{ color: "oklch(0.62 0.22 15)" }}
+            >
+              <AlertCircle
+                className="w-5 h-5"
+                style={{ color: "oklch(0.62 0.22 15)" }}
+              />
               Delete Record?
             </DialogTitle>
           </DialogHeader>
@@ -1157,6 +1450,7 @@ export default function Dashboard() {
             <Button
               variant="outline"
               onClick={() => setDeleteAttId(null)}
+              style={{ borderColor: "rgba(35,230,242,0.25)" }}
               data-ocid="dashboard.delete_attendance.cancel_button"
             >
               Cancel

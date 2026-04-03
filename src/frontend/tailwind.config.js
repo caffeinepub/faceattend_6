@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Bricolage Grotesque', 'General Sans', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ["Bricolage Grotesque", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+        orbitron: ["Orbitron", "sans-serif"],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -78,7 +79,9 @@ export default {
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(0,0,0,0.3)",
-        glow: "0 0 20px oklch(0.58 0.20 250 / 0.3)",
+        glow: "0 0 20px oklch(0.80 0.18 200 / 0.3)",
+        "glow-lg": "0 0 40px oklch(0.80 0.18 200 / 0.4)",
+        "glow-green": "0 0 20px oklch(0.72 0.22 145 / 0.3)",
       },
       keyframes: {
         "accordion-down": {

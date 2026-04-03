@@ -7,6 +7,7 @@ import {
   createRouter,
 } from "@tanstack/react-router";
 import Navbar from "./components/Navbar";
+import StarfieldCanvas from "./components/StarfieldCanvas";
 import { applySettings, loadSettings } from "./hooks/useSettings";
 import Dashboard from "./pages/Dashboard";
 import FaceScan from "./pages/FaceScan";
@@ -18,15 +19,29 @@ applySettings(loadSettings());
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Navbar />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border print:hidden">
-        <div>Developed by Atoto venyo</div>
-      </footer>
-      <Toaster />
+    <div className="min-h-screen flex flex-col">
+      <StarfieldCanvas />
+      {/* Scanline overlay fixed behind content */}
+      <div
+        className="scanline-overlay fixed inset-0 pointer-events-none"
+        style={{ zIndex: 1 }}
+      />
+      <div className="relative flex flex-col flex-1" style={{ zIndex: 2 }}>
+        <Navbar />
+        <main className="flex-1">
+          <Outlet />
+        </main>
+        <footer
+          className="py-3 text-center border-t print:hidden font-mono text-xs tracking-widest uppercase"
+          style={{
+            borderColor: "rgba(35, 230, 242, 0.15)",
+            color: "oklch(0.45 0.05 220)",
+          }}
+        >
+          DEVELOPED BY ATOTO VENYO
+        </footer>
+        <Toaster />
+      </div>
     </div>
   ),
 });
