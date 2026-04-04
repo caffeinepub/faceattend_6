@@ -6,8 +6,8 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+import AnimatedBackground from "./components/AnimatedBackground";
 import Navbar from "./components/Navbar";
-import StarfieldCanvas from "./components/StarfieldCanvas";
 import { applySettings, loadSettings } from "./hooks/useSettings";
 import Dashboard from "./pages/Dashboard";
 import FaceScan from "./pages/FaceScan";
@@ -19,26 +19,24 @@ applySettings(loadSettings());
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen flex flex-col">
-      <StarfieldCanvas />
-      {/* Scanline overlay fixed behind content */}
-      <div
-        className="scanline-overlay fixed inset-0 pointer-events-none"
-        style={{ zIndex: 1 }}
-      />
+    <div className="min-h-screen flex flex-col bg-background">
+      <AnimatedBackground />
       <div className="relative flex flex-col flex-1" style={{ zIndex: 2 }}>
         <Navbar />
         <main className="flex-1">
           <Outlet />
         </main>
         <footer
-          className="py-3 text-center border-t print:hidden font-mono text-xs tracking-widest uppercase"
+          className="py-4 text-center print:hidden"
           style={{
-            borderColor: "rgba(35, 230, 242, 0.15)",
-            color: "oklch(0.45 0.05 220)",
+            borderTop: "1px solid oklch(0.88 0.015 255)",
+            color: "oklch(0.55 0.04 255)",
+            fontSize: "0.75rem",
+            background: "oklch(1 0 0 / 0.8)",
+            backdropFilter: "blur(8px)",
           }}
         >
-          DEVELOPED BY ATOTO VENYO
+          Developed by Atoto venyo
         </footer>
         <Toaster />
       </div>

@@ -1,98 +1,48 @@
-# FaceAttend — Space/Sci-Fi Futuristic Redesign
+# FaceAttend
 
 ## Current State
 
-FaceAttend is a fully functional browser-based facial recognition attendance app with the following pages:
-- **Face Scan** (landing) — camera viewfinder with AI face detection and manual fallback
-- **Register** — camera at top, student/employee tabs with form fields below
-- **Dashboard** — stat cards + Attendance Records + Manage People tabs with CSV export
-- **Settings** — App Identity, Theme, Background, Typography, Data Export, Install on Phone
-
-Current design: dark blue-indigo color palette (OKLCH), Bricolage Grotesque font, standard card/table layout with subtle borders. Functional but visually generic.
+The app currently uses a dark space/sci-fi HUD theme with:
+- Very dark navy/black background (`#040b14`) with a starfield canvas animation
+- Cyan neon glows (`oklch(0.8 0.18 200)`) on all panels, borders, and text
+- HUD corner brackets on panels
+- Scanline overlay on the full screen
+- Orbitron font for headers and nav labels
+- Dark glass panels with very low opacity backgrounds
+- The user describes it as "too dark and dirty"
 
 ## Requested Changes (Diff)
 
 ### Add
-- Animated 3D space/sci-fi background: deep starfield with parallax star particles using Canvas API (requestAnimationFrame)
-- Subtle animated nebula/grid overlay behind all pages
-- Holographic-style HUD panels for all cards/sections (glowing cyan/electric blue borders with corner bracket accents)
-- 3D perspective hover effects on stat cards (CSS transform: perspective + rotateX/Y on hover)
-- Animated scan line on camera viewfinder (existing, enhance intensity)
-- Glowing neon button states with pulse animation on primary CTAs
-- HUD-style navbar with translucent backdrop + neon active indicator
-- Futuristic typography — Orbitron (Google Fonts) for headings and display text, Keep current Bricolage Grotesque for body
-- Animated loading states: spinning ring/hex scanners instead of plain spinners
-- "System online" / "Neural link established" style status labels with terminal flicker effect
-- Planet/orbit SVG decorative motif near logo
-- Subtle grid scanline overlay (CSS) on the background for HUD depth
+- Clean, professional 3D theme that is lighter and more polished
+- Cute / friendly emoji or Lucide icons for each panel/section (e.g., Face Scan panel, Dashboard stats, settings sections)
+- 3D card depth effects using layered shadows, subtle transforms on hover
+- Animated background that is clean and light (soft floating orbs, subtle mesh gradient, or gentle particle field — NOT dark and dirty)
+- Polished color system: bright white/light-grey base with one accent color (suggest sky blue or indigo/violet) — professional SaaS look
+- Smooth glass cards with white/near-white backgrounds (light glassmorphism)
+- Soft drop shadows with color-tinted lift on hover
+- Clean typography: Plus Jakarta Sans or Figtree for body, keep a modern display font for headings
 
 ### Modify
-- Color palette: shift primary to electric cyan (OKLCH 0.75 0.20 205), accent to electric blue (OKLCH 0.60 0.22 250), background to near-black with deep space blue tint (OKLCH 0.07 0.02 250)
-- Navbar: dramatic HUD-style header with neon underline for active tab, logo with animated orbit ring, full-width scan line separator
-- All page containers: replace plain card outlines with HUD-style panels (corner brackets, glowing cyan borders, slightly translucent backgrounds)
-- Stat cards: 3D tilt on hover using CSS perspective transforms, neon glow icons, large mono-font numbers
-- Tables: terminal/HUD aesthetic — alternating row highlights, column headers in uppercase monospace, glowing row hover
-- Buttons: neon glow on hover/active, sharp angular style, uppercase text for primary actions
-- Status indicators: pulsing neon dot for active/live states
-- Footer: slim terminal-style "DEVELOPED BY ATOTO VENYO" in monospace caps
-- Face scan viewfinder: more dramatic HUD overlay with animated corner brackets, rotating scan reticle
-- Slot pills: HUD-style active slot indicator
+- index.css: Replace dark OKLCH tokens with clean light-mode professional tokens. Soft white backgrounds, neutral grays, vivid but not neon accent.
+- StarfieldCanvas: Replace with a clean animated background (floating soft orbs/blobs or animated mesh gradient — bright and airy, not dark)
+- Navbar: Redesign to clean white/frosted glass with subtle border and proper shadow. Remove cyan glow effects. Add clean active states.
+- All pages: Remove HUD corner brackets, scanlines, and neon text effects. Replace with clean card shadows and subtle accent borders.
+- Panels across Dashboard, FaceScan, Register, Settings: Add cute Lucide icons with colored icon containers next to section titles
+- Footer: Keep "Developed by Atoto venyo" but style it clean
 
 ### Remove
-- Generic rounded card shadows replaced by glowing border effects
-- Soft pastel muted colors replaced by high-contrast neon accents on dark
+- Scanline overlay completely
+- HUD corner brackets (`.hud-corners`, `.hud-corners-inner`)
+- All `neon-text-cyan`, `neon-text-green` classes
+- `hud-glow-pulse` and neon flicker animations
+- Orbitron font (too sci-fi heavy for clean professional look)
+- Dark/dirty color palette
 
 ## Implementation Plan
 
-1. Update `index.css`:
-   - New OKLCH token set: deep space background, electric cyan primary, electric blue accent
-   - Add `@import` for Orbitron from Google Fonts
-   - Add @font-face for Orbitron usage in headings
-   - Add CSS: `.hud-panel` (translucent bg + cyan glow border + corner brackets via pseudo-elements)
-   - Add CSS: `.neon-glow` (box-shadow neon effect), `.hud-text` (uppercase tracking-widest)
-   - Add CSS: scanline overlay animation, hex-spinner animation, terminal-flicker animation
-   - Add CSS: 3D card hover via `.card-3d` class
-
-2. Update `tailwind.config.js`:
-   - Register Orbitron in fontFamily
-   - Update color tokens to match new OKLCH palette
-
-3. Update `Navbar.tsx`:
-   - Full-width HUD bar with animated bottom scan-line separator
-   - Logo with mini SVG orbit ring animation around icon
-   - Nav items: icon + label, neon cyan active indicator, angular hover state
-   - Translucent deep-space backdrop
-
-4. Update `App.tsx`:
-   - Add `<StarfieldCanvas>` component as fixed background (z-index 0)
-   - Add subtle CSS grid overlay
-   - Footer: monospace uppercase styling
-
-5. New `StarfieldCanvas.tsx` component:
-   - Canvas-based animated starfield (200–300 stars, parallax speed layers)
-   - requestAnimationFrame loop
-   - Subtle slow-moving nebula smear using radial gradients
-
-6. Update `FaceScan.tsx`:
-   - Page: HUD panel layout
-   - Camera viewfinder: enhanced animated corner brackets (expanding/pulsing), rotating scan reticle overlay
-   - Status pill: neon-styled with terminal flicker on match
-   - Mark Attendance button: full-width neon CTA with animated border pulse
-   - Slot grid: HUD tile styling
-
-7. Update `Register.tsx`:
-   - Camera section: HUD-style panel at top with animated brackets
-   - Tabs: angular selector, not rounded pills
-   - Form fields: dark input with neon focus glow
-   - Register button: neon primary CTA
-
-8. Update `Dashboard.tsx`:
-   - Stat cards: `card-3d` class, neon icon glow, Orbitron font for numbers
-   - Tabs: HUD-style angular tabs
-   - Table: terminal aesthetic with `font-mono` columns, glowing row hover
-   - CSV button: neon outlined style
-
-9. Update `Settings.tsx`:
-   - All sections: `.hud-panel` style instead of plain cards
-   - Section headers: neon icon + uppercase tracking-widest label
-   - Save button: full-width primary neon CTA
+1. **index.css**: Replace entire OKLCH token set with clean professional light palette. Background: near-white (oklch ~0.98). Foreground: dark slate. Primary: rich blue/indigo. Cards: pure white with subtle border. Add new utility classes for 3D card effects, smooth hover lifts.
+2. **StarfieldCanvas.tsx**: Replace starfield with `AnimatedBackground.tsx` — soft pastel gradient orbs floating (CSS animation + canvas or pure CSS), bright and airy.
+3. **Navbar.tsx**: White frosted glass navbar, clean active state with indigo underline, Lucide icons for each nav item, remove all cyan neon styling.
+4. **App.tsx**: Remove scanline overlay div, reference new AnimatedBackground component.
+5. **Pages**: Update panel/card styling — white glass cards with soft shadows, cute icon badges for each panel header. Remove HUD utility class usage.

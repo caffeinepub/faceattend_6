@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, ScanFace, Settings, UserPlus } from "lucide-react";
-import { useEffect, useRef } from "react";
 
 const navItems = [
   { to: "/", icon: ScanFace, label: "Face Scan", ocid: "face_scan" },
@@ -17,86 +16,77 @@ const navItems = [
 export default function Navbar() {
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
-  const scanLineRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = scanLineRef.current;
-    if (!el) return;
-    el.style.display = "block";
-    const timer = setTimeout(() => {
-      if (el) el.style.display = "none";
-    }, 1900);
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
-    // No overflow-hidden here — it clips the active underline glow at bottom
+    /* FIX 2: Taller navbar (h-16), stronger backdrop, cleaner brand + pill nav */
     <header
       className="sticky top-0 z-50 print:hidden"
       style={{
-        background: "rgba(4, 11, 20, 0.88)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderBottom: "1px solid rgba(35, 230, 242, 0.22)",
-        boxShadow: "0 1px 30px rgba(35, 230, 242, 0.07)",
+        background: "oklch(1 0 0 / 0.88)",
+        backdropFilter: "blur(24px) saturate(1.6)",
+        WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+        borderBottom: "1px solid oklch(0.90 0.018 258)",
+        boxShadow: "0 1px 0 oklch(0.94 0.014 258), 0 4px 16px rgba(0,0,0,0.06)",
       }}
     >
-      {/* Mount scan-line sweep — clipped via own overflow, not header */}
-      <div className="relative overflow-hidden h-0">
-        <div
-          ref={scanLineRef}
-          className="navbar-scan-line absolute bottom-0 left-0 h-px w-full pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to right, transparent, rgba(35,230,242,0.8), transparent)",
-            zIndex: 10,
-          }}
-        />
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        {/* Logo */}
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo — stronger brand treatment */}
         <Link
           to="/"
-          className="flex items-center gap-2 sm:gap-2.5 group"
+          className="flex items-center gap-2.5 group"
           data-ocid="nav.link"
         >
+          {/* Icon with gradient ring */}
           <div
-            className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center hud-glow-pulse"
+            className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center"
             style={{
-              background: "rgba(35, 230, 242, 0.08)",
-              border: "1px solid rgba(35, 230, 242, 0.45)",
+              background:
+                "linear-gradient(135deg, oklch(0.50 0.24 265), oklch(0.62 0.20 292))",
+              boxShadow:
+                "0 2px 8px oklch(0.50 0.24 265 / 0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
             }}
           >
-            <ScanFace
-              className="w-4 h-4"
-              style={{ color: "oklch(0.80 0.18 200)" }}
-            />
+            <ScanFace style={{ width: 18, height: 18, color: "white" }} />
           </div>
-          <span className="font-bold text-base sm:text-lg tracking-tight">
-            <span className="text-foreground">Face</span>
-            <span className="font-orbitron neon-text-cyan font-semibold">
-              Attend
-            </span>
-          </span>
+
+          {/* Wordmark with gradient accent on first letter */}
           <span
-            className="hidden xs:flex ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold items-center gap-1"
+            className="font-display font-bold tracking-tight"
+            style={{ fontSize: "1.1rem", lineHeight: 1 }}
+          >
+            <span
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.50 0.24 265), oklch(0.62 0.20 292))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Face
+            </span>
+            <span style={{ color: "oklch(0.15 0.025 262)" }}>Attend</span>
+          </span>
+
+          {/* Live badge */}
+          <span
+            className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
             style={{
-              background: "rgba(69, 255, 122, 0.10)",
-              border: "1px solid rgba(69, 255, 122, 0.30)",
-              color: "oklch(0.72 0.22 145)",
+              background: "oklch(0.91 0.065 152)",
+              color: "oklch(0.38 0.18 152)",
+              border: "1px solid oklch(0.82 0.10 152)",
             }}
           >
             <span
               className="w-1.5 h-1.5 rounded-full pulse-dot"
-              style={{ background: "oklch(0.72 0.22 145)" }}
+              style={{ background: "oklch(0.52 0.18 152)" }}
             />
             LIVE
           </span>
         </Link>
 
-        {/* Nav items */}
-        <nav className="flex items-center gap-0.5">
+        {/* Nav items — filled pill for active, ghost for inactive */}
+        <nav className="flex items-center gap-1">
           {navItems.map(({ to, icon: Icon, label, ocid }) => {
             const isActive =
               to === "/" ? pathname === "/" : pathname.startsWith(to);
@@ -106,64 +96,17 @@ export default function Navbar() {
                 to={to}
                 title={label}
                 data-ocid={`nav.${ocid}.link`}
-                className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-2 min-w-[44px] justify-center sm:justify-start text-xs font-orbitron uppercase tracking-wider transition-colors duration-200"
-                style={{
-                  // Raised contrast for both states: active = full cyan, inactive = legible mid-grey
-                  color: isActive
-                    ? "oklch(0.80 0.18 200)"
-                    : "oklch(0.72 0.04 220)",
-                }}
+                className={`relative flex items-center gap-1.5 px-3 py-2 min-w-[44px] justify-center sm:justify-start text-sm font-semibold rounded-lg transition-all duration-150 ${
+                  isActive ? "nav-pill-active" : "nav-pill-inactive"
+                }`}
               >
-                {/* Active bg pill */}
-                {isActive && (
-                  <span
-                    className="absolute inset-0 rounded-lg"
-                    style={{
-                      background: "rgba(35, 230, 242, 0.07)",
-                      border: "1px solid rgba(35, 230, 242, 0.22)",
-                    }}
-                  />
-                )}
-                {/* Hover bg pill — only on non-active */}
-                {!isActive && (
-                  <span
-                    className="absolute inset-0 rounded-lg opacity-0 hover:opacity-100 transition-opacity duration-150"
-                    style={{ background: "rgba(35, 230, 242, 0.05)" }}
-                  />
-                )}
                 <Icon
-                  className="w-4 h-4 flex-shrink-0 relative z-10"
+                  className="w-4 h-4 flex-shrink-0"
                   style={{
-                    color: isActive
-                      ? "oklch(0.80 0.18 200)"
-                      : "oklch(0.72 0.04 220)",
+                    color: isActive ? "white" : "oklch(0.45 0.04 258)",
                   }}
                 />
-                {/* Show label on sm+ screens */}
-                <span
-                  className="hidden sm:inline relative z-10"
-                  style={{
-                    color: isActive
-                      ? "oklch(0.80 0.18 200)"
-                      : "oklch(0.72 0.04 220)",
-                    textShadow: isActive
-                      ? "0 0 12px rgba(35,230,242,0.45)"
-                      : "none",
-                  }}
-                >
-                  {label}
-                </span>
-                {/* Active underline — rendered OUTSIDE the rounded clip area */}
-                {isActive && (
-                  <span
-                    className="absolute -bottom-px left-2 right-2 h-0.5 rounded-full"
-                    style={{
-                      background: "oklch(0.80 0.18 200)",
-                      boxShadow:
-                        "0 0 8px rgba(35,230,242,0.75), 0 2px 10px rgba(35,230,242,0.35)",
-                    }}
-                  />
-                )}
+                <span className="hidden sm:inline">{label}</span>
               </Link>
             );
           })}

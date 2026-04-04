@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Bricolage Grotesque", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Figtree", "system-ui", "sans-serif"],
+        display: ["Bricolage Grotesque", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
-        orbitron: ["Orbitron", "sans-serif"],
       },
       colors: {
         border: "oklch(var(--border))",
@@ -78,10 +78,10 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        xs: "0 1px 2px 0 rgba(0,0,0,0.3)",
-        glow: "0 0 20px oklch(0.80 0.18 200 / 0.3)",
-        "glow-lg": "0 0 40px oklch(0.80 0.18 200 / 0.4)",
-        "glow-green": "0 0 20px oklch(0.72 0.22 145 / 0.3)",
+        xs: "0 1px 2px 0 rgba(0,0,0,0.05)",
+        card: "0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04)",
+        "card-hover": "0 20px 40px rgba(99,102,241,0.12), 0 8px 16px rgba(0,0,0,0.07)",
+        "lift": "0 12px 28px rgba(99,102,241,0.12), 0 4px 8px rgba(0,0,0,0.06)",
       },
       keyframes: {
         "accordion-down": {

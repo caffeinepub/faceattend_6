@@ -32,12 +32,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
+  BarChart2,
+  Briefcase,
   CalendarCheck,
   Camera,
   CheckCircle2,
+  ClipboardList,
   Clock,
   Download,
-  LayersIcon as Layers,
+  GraduationCap,
   LayoutDashboard,
   Loader2,
   Pencil,
@@ -45,6 +48,7 @@ import {
   SwitchCamera,
   Trash2,
   Users,
+  Users2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -99,19 +103,19 @@ function parseNSQFBatch(batch: string): { level: string; semester: string } {
   return { level: batch, semester: "—" };
 }
 
-// ── 3D Stat Card ─────────────────────────────────────────────────────
+// ── Clean 3D Stat Card ──────────────────────────────────────────────────────
 
 function StatCard({
   label,
   value,
   icon: Icon,
-  glowColor,
+  badgeClass,
   delay = 0,
 }: {
   label: string;
   value: string | number;
   icon: any;
-  glowColor: string;
+  badgeClass: string;
   delay?: number;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -124,15 +128,16 @@ function StatCard({
     const cy = rect.top + rect.height / 2;
     const dx = (e.clientX - cx) / (rect.width / 2);
     const dy = (e.clientY - cy) / (rect.height / 2);
-    card.style.transform = `perspective(800px) rotateX(${-dy * 8}deg) rotateY(${dx * 8}deg)`;
+    card.style.transform = `perspective(800px) rotateX(${-dy * 6}deg) rotateY(${dx * 6}deg) translateY(-2px)`;
     card.style.transition = "transform 0.1s";
   };
 
   const handleMouseLeave = () => {
     const card = cardRef.current;
     if (!card) return;
-    card.style.transform = "perspective(800px) rotateX(0) rotateY(0)";
-    card.style.transition = "transform 0.4s";
+    card.style.transform =
+      "perspective(800px) rotateX(0) rotateY(0) translateY(0)";
+    card.style.transition = "transform 0.4s ease";
   };
 
   return (
@@ -144,33 +149,22 @@ function StatCard({
     >
       <div
         ref={cardRef}
-        className="hud-panel p-4 flex items-start gap-3 cursor-default"
+        className="glass-card p-4 flex items-start gap-3.5 cursor-default"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        style={{
-          boxShadow: `0 0 20px ${glowColor}15, inset 0 0 40px ${glowColor}04`,
-          borderColor: `${glowColor}40`,
-          willChange: "transform",
-        }}
+        style={{ willChange: "transform" }}
       >
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{
-            background: `${glowColor}18`,
-            border: `1px solid ${glowColor}40`,
-            boxShadow: `0 0 10px ${glowColor}25`,
-          }}
-        >
-          <Icon className="w-4 h-4" style={{ color: glowColor }} />
+        <div className={`w-10 h-10 rounded-xl icon-badge ${badgeClass}`}>
+          <Icon style={{ width: 18, height: 18 }} />
         </div>
         <div>
           <p
-            className="text-2xl font-bold font-mono"
-            style={{ color: glowColor, textShadow: `0 0 12px ${glowColor}50` }}
+            className="stat-value text-3xl text-foreground"
+            style={{ fontSize: "1.75rem" }}
           >
             {value}
           </p>
-          <p className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground mt-0.5">
             {label}
           </p>
         </div>
@@ -179,7 +173,7 @@ function StatCard({
   );
 }
 
-// ── EditPersonDialog ─────────────────────────────────────────────────────
+// ── EditPersonDialog ────────────────────────────────────────────────────────
 
 function EditPersonDialog({
   person,
@@ -273,29 +267,34 @@ function EditPersonDialog({
             )
             .withFaceLandmarks()
             .withFaceDescriptor();
-          if (detection?.descriptor) {
-            descriptor = Array.from(detection.descriptor as number[]).map(
-              (v) => (Number.isFinite(v) ? (v as number) : 0),
+          if (detection) {
+            descriptor = (Array.from(detection.descriptor) as number[]).map(
+              (v) => (Number.isFinite(v) ? v : 0),
             );
           }
         }
       }
-      setCapturedDescriptor(descriptor);
-      toast.success("Face captured!");
-      setShowCamera(false);
+      const file = await camera.capturePhoto();
+      if (file) {
+        setCapturedDescriptor(descriptor);
+        toast.success("Face captured");
+        setShowCamera(false);
+      }
+    } catch (_err) {
+      toast.error("Capture failed");
     } finally {
       setIsCapturing(false);
     }
-  }, [camera.videoRef, aiStatus]);
+  }, [camera, aiStatus]);
 
   const handleSave = useCallback(async () => {
-    if (!person) return;
+    if (!person || !name.trim()) return;
     try {
       await updatePerson.mutateAsync({
         id: person.id,
+        name,
         studentId,
         employeeId,
-        name,
         rollNo,
         batch,
       });
@@ -324,21 +323,17 @@ function EditPersonDialog({
   ]);
 
   const isSaving = updatePerson.isPending || updateDescriptor.isPending;
-  const hudInput =
-    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_8px_rgba(35,230,242,0.2)] text-foreground";
+  const inputClass =
+    "bg-white border-border focus:border-primary text-foreground focus:shadow-[0_0_0_3px_oklch(0.52_0.22_265_/_0.12)]";
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
         className="max-w-md"
-        style={{
-          background: "rgba(8,18,28,0.95)",
-          border: "1px solid rgba(35,230,242,0.30)",
-        }}
         data-ocid="dashboard.edit_person.dialog"
       >
         <DialogHeader>
-          <DialogTitle className="font-orbitron uppercase tracking-wider text-sm neon-text-cyan">
+          <DialogTitle className="text-base font-semibold">
             Edit Person
           </DialogTitle>
         </DialogHeader>
@@ -346,7 +341,7 @@ function EditPersonDialog({
           <div className="space-y-1.5">
             <Label
               htmlFor="edit-name"
-              className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+              className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
             >
               Full Name *
             </Label>
@@ -355,7 +350,7 @@ function EditPersonDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter full name"
-              className={hudInput}
+              className={inputClass}
               data-ocid="dashboard.edit_person_name.input"
             />
           </div>
@@ -364,7 +359,7 @@ function EditPersonDialog({
               <div className="space-y-1.5">
                 <Label
                   htmlFor="edit-sid"
-                  className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                 >
                   Student ID
                 </Label>
@@ -373,14 +368,14 @@ function EditPersonDialog({
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   placeholder="Optional"
-                  className={hudInput}
+                  className={inputClass}
                   data-ocid="dashboard.edit_student_id.input"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label
                   htmlFor="edit-roll"
-                  className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                 >
                   Roll No
                 </Label>
@@ -389,7 +384,7 @@ function EditPersonDialog({
                   value={rollNo}
                   onChange={(e) => setRollNo(e.target.value)}
                   placeholder="Optional"
-                  className={hudInput}
+                  className={inputClass}
                   data-ocid="dashboard.edit_roll_no.input"
                 />
               </div>
@@ -398,7 +393,7 @@ function EditPersonDialog({
             <div className="space-y-1.5">
               <Label
                 htmlFor="edit-eid"
-                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 Employee ID
               </Label>
@@ -407,7 +402,7 @@ function EditPersonDialog({
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 placeholder="Optional"
-                className={hudInput}
+                className={inputClass}
                 data-ocid="dashboard.edit_employee_id.input"
               />
             </div>
@@ -416,7 +411,7 @@ function EditPersonDialog({
             <div className="space-y-1.5">
               <Label
                 htmlFor="edit-batch"
-                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 NSQF Level / Semester
               </Label>
@@ -425,20 +420,20 @@ function EditPersonDialog({
                 value={batch}
                 onChange={(e) => setBatch(e.target.value)}
                 placeholder="e.g. NSQF Level-III - 1st Semester"
-                className={hudInput}
+                className={inputClass}
                 data-ocid="dashboard.edit_batch.input"
               />
             </div>
           )}
           <div
-            className="rounded-lg p-3 space-y-2"
+            className="rounded-xl p-3.5 space-y-2"
             style={{
-              border: "1px solid rgba(35,230,242,0.20)",
-              background: "rgba(8,18,28,0.55)",
+              border: "1px solid oklch(0.88 0.015 255)",
+              background: "oklch(0.97 0.008 250)",
             }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Face Photo
               </span>
               <Button
@@ -446,14 +441,6 @@ function EditPersonDialog({
                 size="sm"
                 variant={showCamera ? "destructive" : "outline"}
                 onClick={() => setShowCamera((v) => !v)}
-                style={
-                  !showCamera
-                    ? {
-                        borderColor: "rgba(35,230,242,0.35)",
-                        color: "oklch(0.80 0.18 200)",
-                      }
-                    : undefined
-                }
               >
                 <Camera className="w-3.5 h-3.5 mr-1" />
                 {showCamera
@@ -464,7 +451,10 @@ function EditPersonDialog({
               </Button>
             </div>
             {capturedDescriptor && !showCamera && (
-              <div className="flex items-center gap-1.5 text-xs neon-text-green">
+              <div
+                className="flex items-center gap-1.5 text-xs font-medium"
+                style={{ color: "oklch(0.50 0.16 150)" }}
+              >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 New face captured — will be saved
               </div>
@@ -496,13 +486,16 @@ function EditPersonDialog({
                   {aiStatus === "loading" && (
                     <div
                       className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs"
-                      style={{ color: "oklch(0.80 0.18 70)" }}
+                      style={{ color: "oklch(0.75 0.16 75)" }}
                     >
                       <Loader2 className="w-3 h-3 animate-spin" /> Loading AI...
                     </div>
                   )}
                   {aiStatus === "ready" && (
-                    <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs neon-text-green">
+                    <div
+                      className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-xs font-medium"
+                      style={{ color: "oklch(0.78 0.16 150)" }}
+                    >
                       <CheckCircle2 className="w-3 h-3" /> AI Active
                     </div>
                   )}
@@ -515,10 +508,10 @@ function EditPersonDialog({
                     onClick={handleCapture}
                     disabled={isCapturing || !camera.isActive}
                     style={{
-                      background: "oklch(0.80 0.18 200)",
-                      color: "oklch(0.08 0.015 250)",
+                      background: "oklch(0.52 0.22 265)",
+                      color: "white",
                     }}
-                    data-ocid="dashboard.edit_person.capture_button"
+                    data-ocid="dashboard.recapture.button"
                   >
                     {isCapturing ? (
                       <>
@@ -531,16 +524,16 @@ function EditPersonDialog({
                       </>
                     )}
                   </Button>
-                  {camera.error && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => camera.retry()}
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => camera.retry?.()}
+                    disabled={camera.isLoading}
+                    data-ocid="dashboard.retry_camera.button"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
               </div>
             )}
@@ -550,10 +543,6 @@ function EditPersonDialog({
           <Button
             variant="outline"
             onClick={onClose}
-            style={{
-              borderColor: "rgba(35,230,242,0.30)",
-              color: "oklch(0.60 0.05 220)",
-            }}
             data-ocid="dashboard.edit_person.cancel_button"
           >
             Cancel
@@ -562,8 +551,8 @@ function EditPersonDialog({
             onClick={handleSave}
             disabled={isSaving || !name.trim()}
             style={{
-              background: "oklch(0.80 0.18 200)",
-              color: "oklch(0.08 0.015 250)",
+              background: "oklch(0.52 0.22 265)",
+              color: "white",
             }}
             data-ocid="dashboard.edit_person.save_button"
           >
@@ -581,7 +570,7 @@ function EditPersonDialog({
   );
 }
 
-// ── DeletePersonDialog ─────────────────────────────────────────────────────
+// ── DeletePersonDialog ───────────────────────────────────────────────────
 
 function DeletePersonDialog({
   person,
@@ -602,18 +591,9 @@ function DeletePersonDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <AlertDialogContent
-        style={{
-          background: "rgba(8,18,28,0.95)",
-          border: "1px solid rgba(255,90,95,0.30)",
-        }}
-        data-ocid="dashboard.delete_person.dialog"
-      >
+      <AlertDialogContent data-ocid="dashboard.delete_person.dialog">
         <AlertDialogHeader>
-          <AlertDialogTitle
-            className="font-orbitron uppercase tracking-wider text-sm"
-            style={{ color: "oklch(0.62 0.22 15)" }}
-          >
+          <AlertDialogTitle className="text-destructive">
             Delete {person?.name}?
           </AlertDialogTitle>
           <AlertDialogDescription>
@@ -622,10 +602,7 @@ function DeletePersonDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel
-            style={{ borderColor: "rgba(35,230,242,0.25)" }}
-            data-ocid="dashboard.delete_person.cancel_button"
-          >
+          <AlertDialogCancel data-ocid="dashboard.delete_person.cancel_button">
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
@@ -647,7 +624,7 @@ function DeletePersonDialog({
   );
 }
 
-// ── ManagePersons ──────────────────────────────────────────────────────────
+// ── ManagePersons ─────────────────────────────────────────────────────────
 
 function ManagePersons() {
   const { data: persons = [], isLoading } = useGetAllPersons();
@@ -658,15 +635,12 @@ function ManagePersons() {
     <div>
       {isLoading ? (
         <div
-          className="text-center py-16 text-muted-foreground font-mono text-sm"
+          className="text-center py-16 text-muted-foreground text-sm"
           data-ocid="dashboard.people.loading_state"
         >
-          <div
-            className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3"
-            style={{
-              borderColor: "rgba(35,230,242,0.5)",
-              borderTopColor: "transparent",
-            }}
+          <Loader2
+            className="w-7 h-7 animate-spin mx-auto mb-3"
+            style={{ color: "oklch(0.52 0.22 265)" }}
           />
           Loading personnel...
         </div>
@@ -675,11 +649,10 @@ function ManagePersons() {
           className="text-center py-16 text-muted-foreground"
           data-ocid="dashboard.people.empty_state"
         >
-          <Users
-            className="w-10 h-10 mx-auto mb-3 opacity-30"
-            style={{ color: "oklch(0.80 0.18 200)" }}
-          />
-          <p className="font-orbitron uppercase text-xs tracking-wider">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-4 icon-badge icon-badge-indigo">
+            <Users style={{ width: 26, height: 26 }} />
+          </div>
+          <p className="font-semibold text-foreground text-sm">
             No registered personnel
           </p>
           <p className="text-xs mt-1 text-muted-foreground">
@@ -689,7 +662,7 @@ function ManagePersons() {
       ) : (
         <div
           className="rounded-xl overflow-hidden"
-          style={{ border: "1px solid rgba(35,230,242,0.20)" }}
+          style={{ border: "1px solid oklch(0.88 0.015 255)" }}
           data-ocid="dashboard.people.table"
         >
           <div className="overflow-x-auto">
@@ -697,16 +670,15 @@ function ManagePersons() {
               <thead>
                 <tr
                   style={{
-                    background: "rgba(35,230,242,0.05)",
-                    borderBottom: "1px solid rgba(35,230,242,0.15)",
+                    background: "oklch(0.96 0.01 255)",
+                    borderBottom: "1px solid oklch(0.88 0.015 255)",
                   }}
                 >
                   {["#", "Name", "Type", "ID", "Batch / Roll", "Actions"].map(
                     (h) => (
                       <th
                         key={h}
-                        className="px-4 py-3 text-left font-orbitron text-xs uppercase tracking-wider"
-                        style={{ color: "oklch(0.80 0.18 200)" }}
+                        className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                       >
                         {h}
                       </th>
@@ -723,20 +695,13 @@ function ManagePersons() {
                   return (
                     <tr
                       key={String(p.id)}
-                      className="transition-colors"
+                      className="transition-colors hover:bg-muted/40"
                       style={{
-                        borderBottom: "1px solid rgba(35,230,242,0.08)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background =
-                          "rgba(35,230,242,0.03)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "transparent";
+                        borderBottom: "1px solid oklch(0.92 0.01 255)",
                       }}
                       data-ocid={`dashboard.people.row.item.${i + 1}`}
                     >
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                      <td className="px-4 py-3 text-xs text-muted-foreground font-mono">
                         {i + 1}
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">
@@ -744,28 +709,26 @@ function ManagePersons() {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className="px-2 py-0.5 rounded-full text-xs font-orbitron uppercase tracking-wide"
+                          className="px-2 py-0.5 rounded-full text-xs font-semibold"
                           style={
                             isStudent
                               ? {
-                                  background: "rgba(35,230,242,0.10)",
-                                  color: "oklch(0.80 0.18 200)",
-                                  border: "1px solid rgba(35,230,242,0.25)",
+                                  background: "oklch(0.92 0.05 265)",
+                                  color: "oklch(0.52 0.22 265)",
                                 }
                               : {
-                                  background: "rgba(114,64,255,0.10)",
-                                  color: "oklch(0.72 0.2 280)",
-                                  border: "1px solid rgba(114,64,255,0.25)",
+                                  background: "oklch(0.92 0.05 290)",
+                                  color: "oklch(0.58 0.20 290)",
                                 }
                           }
                         >
                           {isStudent ? "Student" : "Employee"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                      <td className="px-4 py-3 text-xs text-muted-foreground font-mono">
                         {idValue || "—"}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
                         {batchRoll}
                       </td>
                       <td className="px-4 py-3">
@@ -773,17 +736,8 @@ function ManagePersons() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0"
+                            className="h-7 w-7 p-0 hover:bg-primary/10 hover:text-primary"
                             onClick={() => setEditTarget(p)}
-                            style={{ color: "oklch(0.60 0.05 220)" }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color =
-                                "oklch(0.80 0.18 200)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color =
-                                "oklch(0.60 0.05 220)";
-                            }}
                             data-ocid={`dashboard.people.edit_button.${i + 1}`}
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -791,17 +745,8 @@ function ManagePersons() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="h-7 w-7 p-0"
+                            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive"
                             onClick={() => setDeleteTarget(p)}
-                            style={{ color: "oklch(0.60 0.05 220)" }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color =
-                                "oklch(0.62 0.22 15)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color =
-                                "oklch(0.60 0.05 220)";
-                            }}
                             data-ocid={`dashboard.people.delete_button.${i + 1}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -815,10 +760,10 @@ function ManagePersons() {
             </table>
           </div>
           <div
-            className="px-4 py-2 text-xs font-mono text-muted-foreground"
+            className="px-4 py-2.5 text-xs text-muted-foreground"
             style={{
-              borderTop: "1px solid rgba(35,230,242,0.10)",
-              background: "rgba(35,230,242,0.02)",
+              borderTop: "1px solid oklch(0.92 0.01 255)",
+              background: "oklch(0.97 0.006 255)",
             }}
           >
             {persons.length} personnel registered
@@ -839,7 +784,7 @@ function ManagePersons() {
   );
 }
 
-// ── Dashboard ───────────────────────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const today = new Date();
@@ -964,8 +909,8 @@ export default function Dashboard() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }, [attendance, persons]);
 
-  const hudInput =
-    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_8px_rgba(35,230,242,0.2)] text-foreground";
+  const inputClass =
+    "bg-white border-border focus:border-primary text-foreground focus:shadow-[0_0_0_3px_oklch(0.52_0.22_265_/_0.12)]";
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 relative z-10">
@@ -976,23 +921,17 @@ export default function Dashboard() {
         transition={{ duration: 0.4 }}
         className="flex items-center gap-3 mb-8"
       >
-        <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{
-            background: "rgba(35,230,242,0.10)",
-            border: "1px solid rgba(35,230,242,0.35)",
-          }}
-        >
-          <LayoutDashboard
-            className="w-5 h-5"
-            style={{ color: "oklch(0.80 0.18 200)" }}
-          />
+        <div className="w-11 h-11 rounded-2xl icon-badge icon-badge-indigo">
+          <LayoutDashboard style={{ width: 20, height: 20 }} />
         </div>
         <div>
-          <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+          <h1
+            className="heading-display text-foreground"
+            style={{ fontSize: "1.55rem" }}
+          >
             Command Center
           </h1>
-          <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {formatDate(today)}
           </p>
         </div>
@@ -1005,7 +944,7 @@ export default function Dashboard() {
           data-ocid="dashboard.loading_state"
         >
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
+            <Skeleton key={i} className="h-[88px] rounded-2xl" />
           ))}
         </div>
       ) : (
@@ -1014,28 +953,28 @@ export default function Dashboard() {
             label="Total People"
             value={Number(stats?.totalPersons ?? 0)}
             icon={Users}
-            glowColor="#23E6F2"
+            badgeClass="icon-badge-indigo"
             delay={0}
           />
           <StatCard
             label="Total Attendance"
             value={Number(stats?.totalAttendance ?? 0)}
             icon={CalendarCheck}
-            glowColor="#45FF7A"
+            badgeClass="icon-badge-emerald"
             delay={0.05}
           />
           <StatCard
             label="Today's Check-ins"
             value={Number(stats?.todayCheckins ?? 0)}
             icon={Clock}
-            glowColor="#FFD700"
+            badgeClass="icon-badge-violet"
             delay={0.1}
           />
           <StatCard
             label="Active Months"
             value={stats?.activeMonths.length ?? 0}
-            icon={Layers}
-            glowColor="#9B5DE5"
+            icon={BarChart2}
+            badgeClass="icon-badge-amber"
             delay={0.15}
           />
         </div>
@@ -1046,43 +985,47 @@ export default function Dashboard() {
         <TabsList
           className="mb-6"
           style={{
-            background: "rgba(8,18,28,0.55)",
-            border: "1px solid rgba(35,230,242,0.20)",
-            borderRadius: "8px",
+            background: "oklch(0.94 0.012 255)",
+            border: "1px solid oklch(0.88 0.015 255)",
+            borderRadius: "10px",
             padding: "4px",
           }}
           data-ocid="dashboard.tab"
         >
           <TabsTrigger
             value="attendance"
-            className="font-orbitron uppercase text-xs tracking-wider transition-all"
+            className="text-sm font-medium transition-all"
             style={
               activeTab === "attendance"
                 ? {
-                    background: "oklch(0.80 0.18 200)",
-                    color: "oklch(0.08 0.015 250)",
-                    boxShadow: "0 0 10px rgba(35,230,242,0.3)",
+                    background: "oklch(0.52 0.22 265)",
+                    color: "white",
+                    borderRadius: "7px",
+                    boxShadow: "0 2px 8px oklch(0.52 0.22 265 / 0.30)",
                   }
-                : { color: "oklch(0.72 0.04 220)" }
+                : { color: "oklch(0.45 0.03 255)" }
             }
             data-ocid="dashboard.attendance.tab"
           >
+            <ClipboardList className="w-4 h-4 mr-1.5" />
             Attendance Records
           </TabsTrigger>
           <TabsTrigger
             value="people"
-            className="font-orbitron uppercase text-xs tracking-wider transition-all"
+            className="text-sm font-medium transition-all"
             style={
               activeTab === "people"
                 ? {
-                    background: "oklch(0.80 0.18 200)",
-                    color: "oklch(0.08 0.015 250)",
-                    boxShadow: "0 0 10px rgba(35,230,242,0.3)",
+                    background: "oklch(0.52 0.22 265)",
+                    color: "white",
+                    borderRadius: "7px",
+                    boxShadow: "0 2px 8px oklch(0.52 0.22 265 / 0.30)",
                   }
-                : { color: "oklch(0.72 0.04 220)" }
+                : { color: "oklch(0.45 0.03 255)" }
             }
             data-ocid="dashboard.people.tab"
           >
+            <Users2 className="w-4 h-4 mr-1.5" />
             Manage People
           </TabsTrigger>
         </TabsList>
@@ -1091,26 +1034,26 @@ export default function Dashboard() {
           {/* Filters + CSV */}
           <div className="flex flex-wrap gap-3 mb-4 items-center">
             <div className="flex items-center gap-2">
-              <Label className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 Date
               </Label>
               <Input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className={`h-8 text-sm w-40 ${hudInput}`}
+                className={`h-8 text-sm w-40 ${inputClass}`}
                 data-ocid="dashboard.date_filter.input"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Label className="text-xs font-orbitron uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 Month
               </Label>
               <Input
                 type="month"
                 value={monthFilter}
                 onChange={(e) => setMonthFilter(e.target.value)}
-                className={`h-8 text-sm w-36 ${hudInput}`}
+                className={`h-8 text-sm w-36 ${inputClass}`}
                 data-ocid="dashboard.month_filter.input"
               />
             </div>
@@ -1118,30 +1061,29 @@ export default function Dashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs font-orbitron uppercase tracking-wider"
+                className="h-8 text-xs"
                 onClick={() => {
                   setDateFilter("");
                   setMonthFilter("");
                 }}
-                style={{ color: "oklch(0.60 0.05 220)" }}
               >
                 Clear
               </Button>
             )}
             <div className="ml-auto">
               <Button
-                variant="outline"
                 size="sm"
                 onClick={downloadCSV}
                 disabled={attendance.length === 0}
-                className="flex items-center gap-2 h-8 font-orbitron uppercase text-xs tracking-wider"
+                className="flex items-center gap-2 h-8 text-xs font-semibold"
                 style={{
-                  borderColor: "rgba(35,230,242,0.35)",
-                  color: "oklch(0.80 0.18 200)",
+                  background: "oklch(0.52 0.22 265)",
+                  color: "white",
+                  boxShadow: "0 2px 8px oklch(0.52 0.22 265 / 0.25)",
                 }}
                 data-ocid="dashboard.csv_download.button"
               >
-                <Download className="w-4 h-4" />
+                <Download className="w-3.5 h-3.5" />
                 Download CSV
               </Button>
             </div>
@@ -1153,149 +1095,154 @@ export default function Dashboard() {
               data-ocid="dashboard.attendance.loading_state"
             >
               {[0, 1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 rounded-lg" />
+                <Skeleton key={i} className="h-12 rounded-xl" />
               ))}
             </div>
           ) : filteredAttendance.length === 0 ? (
             <div
-              className="rounded-xl border-dashed p-10 text-center hud-panel"
-              style={{ borderStyle: "dashed" }}
+              className="text-center py-16 glass-card"
               data-ocid="dashboard.attendance.empty_state"
             >
-              <CalendarCheck
-                className="w-10 h-10 mx-auto mb-2 opacity-30"
-                style={{ color: "oklch(0.80 0.18 200)" }}
-              />
-              <p className="text-muted-foreground text-sm font-mono">
-                No attendance records found
+              <div className="w-14 h-14 rounded-2xl mx-auto mb-4 icon-badge icon-badge-violet">
+                <ClipboardList style={{ width: 26, height: 26 }} />
+              </div>
+              <p className="font-semibold text-foreground text-sm">
+                No attendance records
+              </p>
+              <p className="text-xs mt-1 text-muted-foreground">
+                {dateFilter || monthFilter
+                  ? "No records match your filter"
+                  : "Mark attendance from the Face Scan page"}
               </p>
             </div>
           ) : (
             <div
               className="rounded-xl overflow-hidden"
-              style={{ border: "1px solid rgba(35,230,242,0.20)" }}
-              data-ocid="dashboard.attendance.table"
+              style={{ border: "1px solid oklch(0.88 0.015 255)" }}
             >
-              <Table>
-                <TableHeader>
-                  <TableRow
-                    style={{
-                      background: "rgba(35,230,242,0.05)",
-                      borderBottom: "1px solid rgba(35,230,242,0.15)",
-                    }}
-                  >
-                    {[
-                      "#",
-                      "Name",
-                      "Type",
-                      "Roll No",
-                      "NSQF Level",
-                      "Semester",
-                      "Slot",
-                      "Time",
-                      "Date",
-                      "Actions",
-                    ].map((h) => (
-                      <TableHead
-                        key={h}
-                        className="font-orbitron text-xs uppercase tracking-wider"
-                        style={{ color: "oklch(0.80 0.18 200)" }}
-                      >
-                        {h}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAttendance.map((r, idx) => {
-                    const isStudent = String(r.personType) === "student";
-                    const { level, semester } = isStudent
-                      ? parseNSQFBatch(
-                          personBatchMap.get(r.personId.toString()) || "",
-                        )
-                      : { level: "—", semester: "—" };
-                    return (
-                      <TableRow
-                        key={String(r.id)}
-                        style={{
-                          borderBottom: "1px solid rgba(35,230,242,0.08)",
-                        }}
-                        className="hover:bg-primary/5 transition-colors"
-                        data-ocid={`dashboard.attendance.row.item.${idx + 1}`}
-                      >
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {idx + 1}
-                        </TableCell>
-                        <TableCell className="font-medium text-foreground">
-                          {r.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className="font-orbitron text-xs uppercase tracking-wide"
-                            style={
-                              isStudent
-                                ? {
-                                    borderColor: "rgba(35,230,242,0.35)",
-                                    color: "oklch(0.80 0.18 200)",
-                                  }
-                                : {
-                                    borderColor: "rgba(114,64,255,0.35)",
-                                    color: "oklch(0.72 0.2 280)",
-                                  }
-                            }
-                          >
-                            {isStudent ? "Student" : "Employee"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-foreground">
-                          {personRollNoMap.get(r.personId.toString()) || "—"}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm font-medium text-foreground">
-                          {level}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-foreground">
-                          {semester}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {r.slot}
-                        </TableCell>
-                        <TableCell
-                          className="font-mono text-sm"
-                          style={{ color: "oklch(0.80 0.18 200)" }}
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow
+                      style={{
+                        background: "oklch(0.96 0.01 255)",
+                        borderBottom: "1px solid oklch(0.88 0.015 255)",
+                      }}
+                    >
+                      {[
+                        "#",
+                        "Name",
+                        "Type",
+                        "Roll No",
+                        "NSQF Level",
+                        "Semester",
+                        "Slot",
+                        "Time",
+                        "Date",
+                        "Actions",
+                      ].map((h) => (
+                        <TableHead
+                          key={h}
+                          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground py-3"
                         >
-                          {r.timeStr}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm text-muted-foreground">
-                          {r.dateStr}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-primary"
-                              onClick={() => openEditAtt(r)}
-                              data-ocid={`dashboard.attendance.edit_button.${idx + 1}`}
+                          {h}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredAttendance.map((r, idx) => {
+                      const isStudent = String(r.personType) === "student";
+                      const { level, semester } = isStudent
+                        ? parseNSQFBatch(
+                            personBatchMap.get(r.personId.toString()) || "",
+                          )
+                        : { level: "—", semester: "—" };
+                      return (
+                        <TableRow
+                          key={String(r.id)}
+                          style={{
+                            borderBottom: "1px solid oklch(0.92 0.01 255)",
+                          }}
+                          className="hover:bg-muted/30 transition-colors"
+                          data-ocid={`dashboard.attendance.row.item.${idx + 1}`}
+                        >
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {r.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="text-xs font-semibold"
+                              style={
+                                isStudent
+                                  ? {
+                                      borderColor: "oklch(0.82 0.08 265)",
+                                      color: "oklch(0.52 0.22 265)",
+                                      background: "oklch(0.94 0.03 265)",
+                                    }
+                                  : {
+                                      borderColor: "oklch(0.82 0.08 290)",
+                                      color: "oklch(0.58 0.20 290)",
+                                      background: "oklch(0.94 0.03 290)",
+                                    }
+                              }
                             >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                              onClick={() => setDeleteAttId(r.id)}
-                              data-ocid={`dashboard.attendance.delete_button.${idx + 1}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                              {isStudent ? "Student" : "Employee"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm text-foreground">
+                            {personRollNoMap.get(r.personId.toString()) || "—"}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm font-medium text-foreground">
+                            {level}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm text-foreground">
+                            {semester}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {r.slot}
+                          </TableCell>
+                          <TableCell
+                            className="font-mono text-sm font-semibold"
+                            style={{ color: "oklch(0.52 0.22 265)" }}
+                          >
+                            {r.timeStr}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm text-muted-foreground">
+                            {r.dateStr}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-primary/10 hover:text-primary"
+                                onClick={() => openEditAtt(r)}
+                                data-ocid={`dashboard.attendance.edit_button.${idx + 1}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={() => setDeleteAttId(r.id)}
+                                data-ocid={`dashboard.attendance.delete_button.${idx + 1}`}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -1307,21 +1254,15 @@ export default function Dashboard() {
 
       {/* Edit Attendance Dialog */}
       <Dialog open={!!editAtt} onOpenChange={(o) => !o && setEditAtt(null)}>
-        <DialogContent
-          style={{
-            background: "rgba(8,18,28,0.95)",
-            border: "1px solid rgba(35,230,242,0.25)",
-          }}
-          data-ocid="dashboard.edit_attendance.dialog"
-        >
+        <DialogContent data-ocid="dashboard.edit_attendance.dialog">
           <DialogHeader>
-            <DialogTitle className="font-orbitron uppercase tracking-wider text-sm neon-text-cyan">
+            <DialogTitle className="text-base font-semibold">
               Edit Attendance Record
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Name
               </Label>
               <Input
@@ -1329,12 +1270,12 @@ export default function Dashboard() {
                 onChange={(e) =>
                   setEditAttForm((p) => ({ ...p, name: e.target.value }))
                 }
-                className={hudInput}
+                className={inputClass}
                 data-ocid="dashboard.edit_name.input"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Slot
               </Label>
               <select
@@ -1342,7 +1283,7 @@ export default function Dashboard() {
                 onChange={(e) =>
                   setEditAttForm((p) => ({ ...p, slot: e.target.value }))
                 }
-                className="w-full h-10 rounded-md px-3 text-sm bg-input/50 border border-border text-foreground"
+                className="w-full h-10 rounded-lg px-3 text-sm bg-white border border-border text-foreground focus:outline-none focus:border-primary"
                 data-ocid="dashboard.edit_slot.select"
               >
                 {SLOTS.map((s) => (
@@ -1354,7 +1295,7 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Date
                 </Label>
                 <Input
@@ -1368,12 +1309,12 @@ export default function Dashboard() {
                       monthStr: d.slice(0, 7),
                     }));
                   }}
-                  className={hudInput}
+                  className={inputClass}
                   data-ocid="dashboard.edit_date.input"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Time
                 </Label>
                 <Input
@@ -1382,7 +1323,7 @@ export default function Dashboard() {
                   onChange={(e) =>
                     setEditAttForm((p) => ({ ...p, timeStr: e.target.value }))
                   }
-                  className={hudInput}
+                  className={inputClass}
                   data-ocid="dashboard.edit_time.input"
                 />
               </div>
@@ -1392,10 +1333,6 @@ export default function Dashboard() {
             <Button
               variant="outline"
               onClick={() => setEditAtt(null)}
-              style={{
-                borderColor: "rgba(35,230,242,0.25)",
-                color: "oklch(0.60 0.05 220)",
-              }}
               data-ocid="dashboard.edit_attendance.cancel_button"
             >
               Cancel
@@ -1403,10 +1340,7 @@ export default function Dashboard() {
             <Button
               onClick={handleSaveAttendance}
               disabled={updateAttendance.isPending}
-              style={{
-                background: "oklch(0.80 0.18 200)",
-                color: "oklch(0.08 0.015 250)",
-              }}
+              style={{ background: "oklch(0.52 0.22 265)", color: "white" }}
               data-ocid="dashboard.edit_attendance.save_button"
             >
               {updateAttendance.isPending ? (
@@ -1424,22 +1358,10 @@ export default function Dashboard() {
         open={deleteAttId !== null}
         onOpenChange={(o) => !o && setDeleteAttId(null)}
       >
-        <DialogContent
-          style={{
-            background: "rgba(8,18,28,0.95)",
-            border: "1px solid rgba(255,90,95,0.25)",
-          }}
-          data-ocid="dashboard.delete_attendance.dialog"
-        >
+        <DialogContent data-ocid="dashboard.delete_attendance.dialog">
           <DialogHeader>
-            <DialogTitle
-              className="flex items-center gap-2 font-orbitron uppercase tracking-wider text-sm"
-              style={{ color: "oklch(0.62 0.22 15)" }}
-            >
-              <AlertCircle
-                className="w-5 h-5"
-                style={{ color: "oklch(0.62 0.22 15)" }}
-              />
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="w-5 h-5" />
               Delete Record?
             </DialogTitle>
           </DialogHeader>
@@ -1450,7 +1372,6 @@ export default function Dashboard() {
             <Button
               variant="outline"
               onClick={() => setDeleteAttId(null)}
-              style={{ borderColor: "rgba(35,230,242,0.25)" }}
               data-ocid="dashboard.delete_attendance.cancel_button"
             >
               Cancel

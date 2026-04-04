@@ -11,10 +11,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import {
   AppWindow,
+  Database,
   Image,
   Palette,
   Phone,
   Save,
+  Settings as SettingsIcon,
+  Smartphone,
   Type,
   Upload,
   Webhook,
@@ -54,22 +57,24 @@ const BG_TYPES = [
   { value: "image", label: "Upload Image" },
 ];
 
-function SectionHeader({ icon: Icon, title }: { icon: any; title: string }) {
+function SectionHeader({
+  icon: Icon,
+  title,
+  badgeClass,
+}: {
+  icon: any;
+  title: string;
+  badgeClass: string;
+}) {
   return (
     <div
-      className="flex items-center gap-2 px-4 py-3"
-      style={{ borderBottom: "1px solid rgba(35,230,242,0.15)" }}
+      className="flex items-center gap-3 px-5 py-4"
+      style={{ borderBottom: "1px solid oklch(0.90 0.015 255)" }}
     >
-      <Icon className="w-4 h-4" style={{ color: "oklch(0.80 0.18 200)" }} />
-      <span
-        className="font-orbitron text-xs uppercase tracking-widest"
-        style={{ color: "oklch(0.80 0.18 200)" }}
-      >
-        {title}
-      </span>
-      <span className="ml-auto text-muted-foreground/30 text-lg leading-none">
-        {"["}
-      </span>
+      <div className={`w-8 h-8 rounded-xl icon-badge ${badgeClass}`}>
+        <Icon style={{ width: 15, height: 15 }} />
+      </div>
+      <span className="text-sm font-semibold text-foreground">{title}</span>
     </div>
   );
 }
@@ -155,13 +160,8 @@ export default function Settings() {
     }
   };
 
-  const hudInput =
-    "bg-input/50 border-border focus:border-primary focus:shadow-[0_0_12px_rgba(35,230,242,0.25)] text-foreground placeholder:text-muted-foreground/50";
-  const selectStyle = {
-    background: "rgba(12,22,36,0.80)",
-    borderColor: "rgba(35,230,242,0.25)",
-    color: "oklch(0.94 0.01 200)",
-  };
+  const inputClass =
+    "bg-white border-border focus:border-primary text-foreground placeholder:text-muted-foreground/50 focus:shadow-[0_0_0_3px_oklch(0.52_0.22_265_/_0.12)]";
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 relative z-10">
@@ -173,23 +173,14 @@ export default function Settings() {
       >
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{
-              background: "rgba(35,230,242,0.10)",
-              border: "1px solid rgba(35,230,242,0.35)",
-            }}
-          >
-            <AppWindow
-              className="w-5 h-5"
-              style={{ color: "oklch(0.80 0.18 200)" }}
-            />
+          <div className="w-11 h-11 rounded-2xl icon-badge icon-badge-indigo">
+            <SettingsIcon style={{ width: 20, height: 20 }} />
           </div>
           <div>
-            <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+            <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
               Settings
             </h1>
-            <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-0.5">
               System Configuration
             </p>
           </div>
@@ -200,14 +191,18 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={AppWindow} title="App Identity" />
-          <div className="p-4 space-y-4">
+          <SectionHeader
+            icon={AppWindow}
+            title="App Identity"
+            badgeClass="icon-badge-indigo"
+          />
+          <div className="p-5 space-y-4">
             <div className="space-y-1.5">
               <Label
                 htmlFor="appName"
-                className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground"
+                className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 App Name
               </Label>
@@ -215,20 +210,20 @@ export default function Settings() {
                 id="appName"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
-                className={hudInput}
+                className={inputClass}
                 data-ocid="settings.app_name.input"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 App Icon
               </Label>
               <div className="flex items-center gap-3">
                 <div
                   className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
                   style={{
-                    background: "rgba(35,230,242,0.06)",
-                    border: "1px solid rgba(35,230,242,0.25)",
+                    background: "oklch(0.94 0.04 265)",
+                    border: "1px solid oklch(0.85 0.06 265)",
                   }}
                 >
                   {appIconPreview ? (
@@ -239,8 +234,8 @@ export default function Settings() {
                     />
                   ) : (
                     <AppWindow
-                      className="w-7 h-7 opacity-30"
-                      style={{ color: "oklch(0.80 0.18 200)" }}
+                      className="w-7 h-7"
+                      style={{ color: "oklch(0.65 0.14 265)" }}
                     />
                   )}
                 </div>
@@ -249,11 +244,7 @@ export default function Settings() {
                     variant="outline"
                     size="sm"
                     onClick={() => iconInputRef.current?.click()}
-                    className="text-xs font-orbitron uppercase tracking-wider"
-                    style={{
-                      borderColor: "rgba(35,230,242,0.35)",
-                      color: "oklch(0.80 0.18 200)",
-                    }}
+                    className="text-xs font-medium"
                     data-ocid="settings.upload_icon.button"
                   >
                     <Upload className="w-3.5 h-3.5 mr-1.5" />
@@ -264,8 +255,7 @@ export default function Settings() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setAppIconPreview(null)}
-                      className="text-xs"
-                      style={{ color: "oklch(0.62 0.22 15)" }}
+                      className="text-xs text-destructive hover:text-destructive"
                       data-ocid="settings.remove_icon.button"
                     >
                       <X className="w-3.5 h-3.5 mr-1" />
@@ -290,13 +280,17 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={Palette} title="Theme" />
-          <div className="p-4 space-y-4">
+          <SectionHeader
+            icon={Palette}
+            title="Theme"
+            badgeClass="icon-badge-violet"
+          />
+          <div className="p-5 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
-                Theme
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Color Theme
               </Label>
               <div className="grid grid-cols-3 gap-2">
                 {THEMES.map((t) => (
@@ -304,23 +298,20 @@ export default function Settings() {
                     key={t.id}
                     type="button"
                     onClick={() => setTheme(t.id)}
-                    className="px-3 py-2 rounded-lg text-xs font-orbitron uppercase tracking-wider border transition-all"
+                    className="px-3 py-2.5 rounded-xl text-sm font-medium border transition-all"
                     style={{
                       background:
                         theme === t.id
-                          ? "oklch(0.80 0.18 200)"
-                          : "rgba(8,18,28,0.55)",
-                      color:
-                        theme === t.id
-                          ? "oklch(0.08 0.015 250)"
-                          : "oklch(0.60 0.05 220)",
+                          ? "oklch(0.52 0.22 265)"
+                          : "oklch(0.97 0.008 250)",
+                      color: theme === t.id ? "white" : "oklch(0.45 0.03 255)",
                       borderColor:
                         theme === t.id
-                          ? "rgba(35,230,242,0.5)"
-                          : "rgba(35,230,242,0.15)",
+                          ? "oklch(0.52 0.22 265)"
+                          : "oklch(0.88 0.015 255)",
                       boxShadow:
                         theme === t.id
-                          ? "0 0 10px rgba(35,230,242,0.25)"
+                          ? "0 2px 8px oklch(0.52 0.22 265 / 0.25)"
                           : "none",
                     }}
                     data-ocid="settings.theme.toggle"
@@ -330,8 +321,10 @@ export default function Settings() {
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Dark Mode</Label>
+            <div className="flex items-center justify-between py-1">
+              <Label className="text-sm font-medium text-foreground">
+                Dark Mode
+              </Label>
               <Switch
                 checked={darkMode}
                 onCheckedChange={setDarkMode}
@@ -339,7 +332,7 @@ export default function Settings() {
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Accent Color
               </Label>
               <div className="flex items-center gap-3">
@@ -348,28 +341,26 @@ export default function Settings() {
                     key={color}
                     type="button"
                     onClick={() => setAccentColor(color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === color ? "scale-110" : ""}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === color ? "scale-110 ring-2 ring-offset-2" : ""}`}
                     style={{
                       backgroundColor: color,
                       borderColor:
-                        accentColor === color
-                          ? "oklch(0.94 0.01 200)"
-                          : "transparent",
+                        accentColor === color ? color : "oklch(0.88 0.015 255)",
                     }}
                     aria-label={color}
                     data-ocid="settings.accent_color.toggle"
                   />
                 ))}
                 <div
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-                  style={{
-                    background: "rgba(35,230,242,0.05)",
-                    border: "1px solid rgba(35,230,242,0.15)",
-                  }}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border"
+                  style={{ borderColor: "oklch(0.88 0.015 255)" }}
                 >
                   <div
-                    className="w-4 h-4 rounded-full border border-border"
-                    style={{ backgroundColor: accentColor }}
+                    className="w-4 h-4 rounded-full border"
+                    style={{
+                      backgroundColor: accentColor,
+                      borderColor: "oklch(0.88 0.015 255)",
+                    }}
                   />
                   <span className="text-sm font-mono text-muted-foreground">
                     {accentColor}
@@ -393,18 +384,21 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={Image} title="Background" />
-          <div className="p-4 space-y-4">
+          <SectionHeader
+            icon={Image}
+            title="Background"
+            badgeClass="icon-badge-sky"
+          />
+          <div className="p-5 space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Background Type
               </Label>
               <Select value={bgType} onValueChange={setBgType}>
                 <SelectTrigger
-                  className={hudInput}
-                  style={selectStyle}
+                  className={inputClass}
                   data-ocid="settings.bg_type.select"
                 >
                   <SelectValue />
@@ -422,12 +416,8 @@ export default function Settings() {
               <div className="space-y-2">
                 <Button
                   variant="outline"
-                  className="w-full font-orbitron uppercase text-xs tracking-wider"
+                  className="w-full text-sm font-medium"
                   onClick={() => bgInputRef.current?.click()}
-                  style={{
-                    borderColor: "rgba(35,230,242,0.35)",
-                    color: "oklch(0.80 0.18 200)",
-                  }}
                   data-ocid="settings.upload_bg.button"
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -435,10 +425,10 @@ export default function Settings() {
                 </Button>
                 {bgImagePreview && (
                   <div
-                    className="relative rounded-lg overflow-hidden border"
+                    className="relative rounded-xl overflow-hidden border"
                     style={{
                       aspectRatio: "16/5",
-                      borderColor: "rgba(35,230,242,0.25)",
+                      borderColor: "oklch(0.88 0.015 255)",
                     }}
                   >
                     <img
@@ -449,10 +439,10 @@ export default function Settings() {
                     <button
                       type="button"
                       onClick={() => setBgImagePreview(null)}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive flex items-center justify-center"
+                      className="absolute top-2 right-2 w-7 h-7 rounded-full bg-destructive flex items-center justify-center"
                       data-ocid="settings.remove_bg.button"
                     >
-                      <X className="w-3 h-3 text-white" />
+                      <X className="w-3.5 h-3.5 text-white" />
                     </button>
                   </div>
                 )}
@@ -473,18 +463,21 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={Type} title="Typography" />
-          <div className="p-4">
+          <SectionHeader
+            icon={Type}
+            title="Typography"
+            badgeClass="icon-badge-slate"
+          />
+          <div className="p-5">
             <div className="space-y-1.5">
-              <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Font Size
               </Label>
               <Select value={fontSize} onValueChange={setFontSize}>
                 <SelectTrigger
-                  className={hudInput}
-                  style={selectStyle}
+                  className={inputClass}
                   data-ocid="settings.font_size.select"
                 >
                   <SelectValue />
@@ -506,18 +499,22 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={Webhook} title="Data Export" />
-          <div className="p-4 space-y-2">
-            <Label className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground">
+          <SectionHeader
+            icon={Database}
+            title="Data Export"
+            badgeClass="icon-badge-emerald"
+          />
+          <div className="p-5 space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Webhook URL
             </Label>
             <Input
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
               placeholder="https://your-ngrok-url.ngrok.io/attendance"
-              className={`${hudInput} font-mono text-sm`}
+              className={`${inputClass} font-mono text-sm`}
               data-ocid="settings.webhook_url.input"
             />
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -532,10 +529,14 @@ export default function Settings() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="hud-panel overflow-hidden"
+          className="glass-card overflow-hidden"
         >
-          <SectionHeader icon={Phone} title="Install on Phone" />
-          <div className="p-4 space-y-4">
+          <SectionHeader
+            icon={Smartphone}
+            title="Install on Phone"
+            badgeClass="icon-badge-indigo"
+          />
+          <div className="p-5 space-y-4">
             <p className="text-sm text-muted-foreground">
               FaceAttend can be installed directly on your phone as an app — no
               app store needed.
@@ -543,17 +544,17 @@ export default function Settings() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold font-orbitron"
+                  className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold"
                   style={{
-                    background: "rgba(35,230,242,0.12)",
-                    color: "oklch(0.80 0.18 200)",
+                    background: "oklch(0.92 0.05 265)",
+                    color: "oklch(0.52 0.22 265)",
                   }}
                 >
                   A
                 </div>
                 <span className="text-sm font-semibold">Android (Chrome)</span>
               </div>
-              <ol className="ml-7 space-y-1 text-sm text-muted-foreground list-decimal list-outside">
+              <ol className="ml-8 space-y-1 text-sm text-muted-foreground list-decimal list-outside">
                 <li>Open this app in Chrome</li>
                 <li>Tap the three-dot menu (⋮) in the top right</li>
                 <li>
@@ -571,17 +572,17 @@ export default function Settings() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-5 h-5 rounded flex items-center justify-center text-xs font-bold font-orbitron"
+                  className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold"
                   style={{
-                    background: "rgba(35,230,242,0.12)",
-                    color: "oklch(0.80 0.18 200)",
+                    background: "oklch(0.94 0.012 255)",
+                    color: "oklch(0.45 0.04 255)",
                   }}
                 >
                   i
                 </div>
                 <span className="text-sm font-semibold">iPhone (Safari)</span>
               </div>
-              <ol className="ml-7 space-y-1 text-sm text-muted-foreground list-decimal list-outside">
+              <ol className="ml-8 space-y-1 text-sm text-muted-foreground list-decimal list-outside">
                 <li>Open this app in Safari</li>
                 <li>Tap the Share button (□↑) at the bottom</li>
                 <li>
@@ -598,7 +599,7 @@ export default function Settings() {
             </div>
             <p
               className="text-xs text-muted-foreground pt-3"
-              style={{ borderTop: "1px solid rgba(35,230,242,0.12)" }}
+              style={{ borderTop: "1px solid oklch(0.90 0.015 255)" }}
             >
               Once installed, it will appear on your home screen with its own
               icon, just like a regular app.
@@ -608,13 +609,12 @@ export default function Settings() {
 
         {/* Save Button */}
         <Button
-          className="w-full h-12 text-xs font-orbitron uppercase tracking-widest hud-glow-pulse"
+          className="w-full h-12 text-sm font-semibold"
           onClick={handleSave}
           style={{
-            background: "oklch(0.80 0.18 200)",
-            color: "oklch(0.08 0.015 250)",
-            boxShadow: "0 0 24px rgba(35,230,242,0.30)",
-            border: "1px solid rgba(35,230,242,0.5)",
+            background: "oklch(0.52 0.22 265)",
+            color: "white",
+            boxShadow: "0 4px 16px oklch(0.52 0.22 265 / 0.35)",
           }}
           data-ocid="settings.save_settings.button"
         >

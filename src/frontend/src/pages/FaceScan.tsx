@@ -349,11 +349,12 @@ export default function FaceScan() {
   };
 
   const slot = getCurrentSlot();
-
   const isMatch = scanStatus === "match";
+
+  // Clean bracket color: indigo for active, slate for idle
   const bracketColor = isMatch
-    ? "oklch(0.72 0.22 145)"
-    : "oklch(0.80 0.18 200)";
+    ? "oklch(0.55 0.18 150)"
+    : "oklch(0.52 0.22 265)";
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 relative z-10">
@@ -365,34 +366,27 @@ export default function FaceScan() {
         {/* Page header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{
-                background: "rgba(35,230,242,0.10)",
-                border: "1px solid rgba(35,230,242,0.35)",
-              }}
-            >
-              <ScanFace
-                className="w-5 h-5"
-                style={{ color: "oklch(0.80 0.18 200)" }}
-              />
+            <div className="w-11 h-11 rounded-2xl icon-badge icon-badge-sky">
+              <ScanFace style={{ width: 22, height: 22 }} />
             </div>
             <div>
-              <h1 className="text-3xl font-orbitron font-bold uppercase tracking-widest neon-text-cyan">
+              <h1
+                className="heading-display text-foreground"
+                style={{ fontSize: "1.55rem" }}
+              >
                 Biometric Scan
               </h1>
-              <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {manualMode
                   ? "Manual Attendance Verification"
                   : "AI-Powered Attendance Verification"}
               </p>
             </div>
             <div
-              className="ml-auto px-3 py-1 rounded-full font-orbitron text-xs uppercase tracking-wider"
+              className="ml-auto px-3 py-1.5 rounded-full text-xs font-semibold"
               style={{
-                background: "rgba(35,230,242,0.10)",
-                border: "1px solid rgba(35,230,242,0.35)",
-                color: "oklch(0.80 0.18 200)",
+                background: "oklch(0.92 0.05 265)",
+                color: "oklch(0.52 0.22 265)",
               }}
             >
               {slot} Slot
@@ -405,11 +399,11 @@ export default function FaceScan() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-4 p-3 rounded-lg flex items-center gap-2 text-sm"
+            className="mb-4 p-3 rounded-xl flex items-center gap-2 text-sm"
             style={{
-              background: "rgba(128,96,0,0.15)",
-              border: "1px solid rgba(200,160,0,0.3)",
-              color: "oklch(0.80 0.18 70)",
+              background: "oklch(0.97 0.06 80)",
+              border: "1px solid oklch(0.88 0.10 75)",
+              color: "oklch(0.50 0.16 70)",
             }}
             data-ocid="scan.manual_mode.panel"
           >
@@ -421,11 +415,11 @@ export default function FaceScan() {
         {/* AI loading indicator */}
         {!manualMode && (loadingModels || (!modelsLoaded && !camLoading)) && (
           <div
-            className="mb-4 p-3 rounded-lg flex items-center gap-2 text-sm"
+            className="mb-4 p-3 rounded-xl flex items-center gap-2 text-sm"
             style={{
-              background: "rgba(35,230,242,0.06)",
-              border: "1px solid rgba(35,230,242,0.20)",
-              color: "oklch(0.80 0.18 200)",
+              background: "oklch(0.94 0.04 265)",
+              border: "1px solid oklch(0.82 0.08 265)",
+              color: "oklch(0.52 0.22 265)",
             }}
             data-ocid="scan.loading_state"
           >
@@ -438,10 +432,10 @@ export default function FaceScan() {
                 type="button"
                 onClick={() => setManualMode(true)}
                 className="ml-auto text-xs underline underline-offset-2"
-                style={{ color: "oklch(0.70 0.10 200)" }}
+                style={{ color: "oklch(0.52 0.22 265)" }}
                 data-ocid="scan.manual_mode.button"
               >
-                Use Manual Mode
+                Use Manual
               </button>
             )}
           </div>
@@ -449,12 +443,14 @@ export default function FaceScan() {
 
         {/* Camera viewfinder */}
         <div
-          className="relative overflow-hidden rounded-xl bracket-expand"
+          className="relative overflow-hidden rounded-2xl"
           style={{
             aspectRatio: "4/3",
-            background: "#000",
-            border: `1px solid ${bracketColor}`,
-            boxShadow: `0 0 30px ${isMatch ? "rgba(69,255,122,0.15)" : "rgba(35,230,242,0.12)"}, 0 0 60px ${isMatch ? "rgba(69,255,122,0.05)" : "rgba(35,230,242,0.04)"}`,
+            background: "#0a0a0a",
+            border: `2px solid ${isMatch ? "oklch(0.70 0.18 150)" : "oklch(0.82 0.06 265)"}`,
+            boxShadow: isMatch
+              ? "0 0 0 4px oklch(0.92 0.06 150), 0 8px 24px rgba(0,0,0,0.12)"
+              : "0 8px 24px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06)",
           }}
         >
           <video
@@ -466,86 +462,74 @@ export default function FaceScan() {
           />
           <canvas ref={canvasRef} className="hidden" />
 
-          {/* Rotating scan ring when active */}
+          {/* Subtle scan ring */}
           {isActive && modelsLoaded && (
             <div
               className="absolute pointer-events-none spin-slow"
               style={{
                 inset: "12%",
                 borderRadius: "50%",
-                border: `1px dashed ${bracketColor}`,
-                opacity: 0.25,
+                border: `1.5px dashed ${bracketColor}`,
+                opacity: 0.35,
               }}
             />
           )}
 
-          {/* Prominent HUD corner brackets */}
+          {/* Clean corner markers */}
           <div className="absolute inset-0 pointer-events-none">
-            {/* Top-left */}
             <div
-              className="absolute top-4 left-4 w-8 h-8"
+              className="absolute top-4 left-4 w-6 h-6"
               style={{
-                borderTopWidth: 3,
-                borderLeftWidth: 3,
+                borderTopWidth: 2.5,
+                borderLeftWidth: 2.5,
                 borderTopStyle: "solid",
                 borderLeftStyle: "solid",
                 borderColor: bracketColor,
-                boxShadow: `0 0 8px ${bracketColor}`,
+                borderTopLeftRadius: 4,
               }}
             />
-            {/* Top-right */}
             <div
-              className="absolute top-4 right-4 w-8 h-8"
+              className="absolute top-4 right-4 w-6 h-6"
               style={{
-                borderTopWidth: 3,
-                borderRightWidth: 3,
+                borderTopWidth: 2.5,
+                borderRightWidth: 2.5,
                 borderTopStyle: "solid",
                 borderRightStyle: "solid",
                 borderColor: bracketColor,
-                boxShadow: `0 0 8px ${bracketColor}`,
+                borderTopRightRadius: 4,
               }}
             />
-            {/* Bottom-left */}
             <div
-              className="absolute bottom-4 left-4 w-8 h-8"
+              className="absolute bottom-4 left-4 w-6 h-6"
               style={{
-                borderBottomWidth: 3,
-                borderLeftWidth: 3,
+                borderBottomWidth: 2.5,
+                borderLeftWidth: 2.5,
                 borderBottomStyle: "solid",
                 borderLeftStyle: "solid",
                 borderColor: bracketColor,
-                boxShadow: `0 0 8px ${bracketColor}`,
+                borderBottomLeftRadius: 4,
               }}
             />
-            {/* Bottom-right */}
             <div
-              className="absolute bottom-4 right-4 w-8 h-8"
+              className="absolute bottom-4 right-4 w-6 h-6"
               style={{
-                borderBottomWidth: 3,
-                borderRightWidth: 3,
+                borderBottomWidth: 2.5,
+                borderRightWidth: 2.5,
                 borderBottomStyle: "solid",
                 borderRightStyle: "solid",
                 borderColor: bracketColor,
-                boxShadow: `0 0 8px ${bracketColor}`,
+                borderBottomRightRadius: 4,
               }}
             />
-
-            {/* Scan line */}
-            {isActive && modelsLoaded && (
-              <div
-                className="absolute left-0 right-0 h-0.5 opacity-60 scan-line"
-                style={{
-                  background: `linear-gradient(to right, transparent, ${bracketColor}, transparent)`,
-                  boxShadow: `0 0 6px ${bracketColor}`,
-                }}
-              />
-            )}
-
-            {/* HUD readouts */}
+            {/* Subtle status label */}
             {isActive && (
               <div
-                className="absolute top-2 left-14 font-mono text-[9px] uppercase tracking-widest opacity-50"
-                style={{ color: bracketColor }}
+                className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[10px] font-medium"
+                style={{
+                  background: "rgba(0,0,0,0.55)",
+                  color: bracketColor,
+                  backdropFilter: "blur(4px)",
+                }}
               >
                 SCANNING
               </div>
@@ -557,61 +541,55 @@ export default function FaceScan() {
             <button
               type="button"
               onClick={() => switchCamera()}
-              className="absolute top-14 right-2 z-10 p-2 rounded-full transition-colors"
+              className="absolute top-12 right-3 z-10 p-2 rounded-xl transition-colors"
               style={{
-                background: "rgba(0,0,0,0.6)",
-                border: "1px solid rgba(35,230,242,0.3)",
+                background: "rgba(255,255,255,0.15)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.3)",
               }}
               data-ocid="scan.toggle"
               aria-label="Switch camera"
             >
-              <SwitchCamera className="w-5 h-5 text-white" />
+              <SwitchCamera className="w-4 h-4 text-white" />
             </button>
           )}
 
           {camError && (
             <div
               className="absolute inset-0 flex items-center justify-center"
-              style={{ background: "rgba(4,11,20,0.90)" }}
+              style={{ background: "rgba(10,10,10,0.85)" }}
             >
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-2 px-4">
                 <AlertCircle
                   className="w-10 h-10 mx-auto"
-                  style={{ color: "oklch(0.62 0.22 15)" }}
+                  style={{ color: "oklch(0.65 0.18 20)" }}
                 />
-                <p
-                  className="text-sm font-mono"
-                  style={{ color: "oklch(0.62 0.22 15)" }}
-                >
-                  {camError.message}
-                </p>
+                <p className="text-sm text-white/80">{camError.message}</p>
               </div>
             </div>
           )}
           {!isActive && !camLoading && !camError && (
             <div
               className="absolute inset-0 flex items-center justify-center"
-              style={{ background: "rgba(4,11,20,0.85)" }}
+              style={{ background: "rgba(10,10,10,0.80)" }}
             >
               <div className="text-center space-y-2">
                 <ScanFace
-                  className="w-12 h-12 mx-auto opacity-30"
-                  style={{ color: "oklch(0.80 0.18 200)" }}
+                  className="w-12 h-12 mx-auto opacity-40"
+                  style={{ color: "oklch(0.75 0.12 265)" }}
                 />
-                <p className="text-sm font-mono text-muted-foreground">
-                  Starting camera...
-                </p>
+                <p className="text-sm text-white/60">Starting camera...</p>
               </div>
             </div>
           )}
           {camLoading && (
             <div
               className="absolute inset-0 flex items-center justify-center"
-              style={{ background: "rgba(4,11,20,0.85)" }}
+              style={{ background: "rgba(10,10,10,0.80)" }}
             >
               <Loader2
                 className="w-8 h-8 animate-spin"
-                style={{ color: "oklch(0.80 0.18 200)" }}
+                style={{ color: "oklch(0.75 0.12 265)" }}
               />
             </div>
           )}
@@ -623,7 +601,21 @@ export default function FaceScan() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="mt-4 px-4 py-3 rounded-xl flex items-center gap-3 hud-panel"
+            className="mt-3 px-4 py-3 rounded-xl flex items-center gap-3"
+            style={{
+              background:
+                scanStatus === "match"
+                  ? "oklch(0.94 0.06 150)"
+                  : scanStatus === "unknown"
+                    ? "oklch(0.96 0.05 75)"
+                    : "oklch(0.97 0.01 255)",
+              border:
+                scanStatus === "match"
+                  ? "1px solid oklch(0.82 0.12 150)"
+                  : scanStatus === "unknown"
+                    ? "1px solid oklch(0.88 0.08 75)"
+                    : "1px solid oklch(0.88 0.015 255)",
+            }}
             data-ocid={
               scanStatus === "match"
                 ? "scan.match.success_state"
@@ -631,49 +623,59 @@ export default function FaceScan() {
             }
           >
             {scanStatus === "match" && (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 neon-text-green" />
+              <CheckCircle2
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: "oklch(0.55 0.18 150)" }}
+              />
             )}
             {scanStatus === "unknown" && (
               <AlertCircle
                 className="w-5 h-5 flex-shrink-0"
-                style={{ color: "oklch(0.80 0.18 70)" }}
+                style={{ color: "oklch(0.60 0.16 70)" }}
               />
             )}
             {(scanStatus === "idle" || scanStatus === "no-face") && (
-              <ScanFace className="w-5 h-5 flex-shrink-0 text-muted-foreground" />
+              <ScanFace
+                className="w-5 h-5 flex-shrink-0"
+                style={{ color: "oklch(0.55 0.04 255)" }}
+              />
             )}
             <div className="flex-1">
               <p
-                className="font-semibold font-orbitron uppercase text-sm tracking-wide"
+                className="font-semibold text-sm"
                 style={{
                   color:
                     scanStatus === "match"
-                      ? "oklch(0.72 0.22 145)"
+                      ? "oklch(0.40 0.16 150)"
                       : scanStatus === "unknown"
-                        ? "oklch(0.80 0.18 70)"
-                        : undefined,
+                        ? "oklch(0.45 0.14 70)"
+                        : "oklch(0.35 0.03 255)",
                 }}
               >
                 {scanStatus === "match" && matchResult
-                  ? `MATCH: ${matchResult.name}`
+                  ? `Match: ${matchResult.name}`
                   : scanStatus === "no-face"
-                    ? "NO FACE DETECTED"
+                    ? "No face detected"
                     : scanStatus === "unknown"
-                      ? "UNKNOWN FACE"
-                      : "INITIALIZING..."}
+                      ? "Unknown face"
+                      : "Initializing..."}
               </p>
               {matchResult && (
-                <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                  TYPE: {matchResult.personTypeStr.toUpperCase()}
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Type: {matchResult.personTypeStr}
                 </p>
               )}
             </div>
             {modelsLoaded && isActive && (
               <span
-                className="text-xs font-mono neon-flicker"
-                style={{ color: "oklch(0.80 0.18 200)" }}
+                className="flex items-center gap-1.5 text-xs font-medium"
+                style={{ color: "oklch(0.52 0.22 265)" }}
               >
-                AI ACTIVE
+                <span
+                  className="w-1.5 h-1.5 rounded-full pulse-dot"
+                  style={{ background: "oklch(0.52 0.22 265)" }}
+                />
+                AI Active
               </span>
             )}
           </motion.div>
@@ -689,42 +691,42 @@ export default function FaceScan() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.05 }}
-                className="rounded-lg p-2.5 sm:p-2 text-center text-xs border transition-all"
+                className="rounded-xl p-2.5 text-center text-xs border transition-all"
                 style={{
                   background: isCurrentSlot
-                    ? "rgba(35,230,242,0.10)"
-                    : "rgba(8,18,28,0.55)",
+                    ? "oklch(0.92 0.05 265)"
+                    : "oklch(1 0 0)",
                   borderColor: isCurrentSlot
-                    ? "rgba(35,230,242,0.50)"
-                    : "rgba(35,230,242,0.18)",
+                    ? "oklch(0.72 0.14 265)"
+                    : "oklch(0.88 0.015 255)",
                   color: isCurrentSlot
-                    ? "oklch(0.80 0.18 200)"
-                    : "oklch(0.78 0.03 220)",
+                    ? "oklch(0.45 0.22 265)"
+                    : "oklch(0.45 0.03 255)",
                   boxShadow: isCurrentSlot
-                    ? "0 0 12px rgba(35,230,242,0.15)"
-                    : "none",
-                  fontFamily: isCurrentSlot
-                    ? "Orbitron, sans-serif"
-                    : undefined,
+                    ? "0 2px 8px oklch(0.52 0.22 265 / 0.15)"
+                    : "0 1px 3px rgba(0,0,0,0.04)",
+                  fontWeight: isCurrentSlot ? 600 : 400,
                 }}
               >
-                <div className="font-semibold">{s.label}</div>
-                <div className="opacity-60 mt-0.5">{s.time}</div>
+                <div>{s.label}</div>
+                <div className="opacity-60 mt-0.5 text-[10px]">{s.time}</div>
               </motion.div>
             );
           })}
           {slot === "General" && (
             <div
-              className="rounded-lg p-2 text-center text-xs border transition-all col-span-4"
+              className="rounded-xl p-2 text-center text-xs border col-span-4"
               style={{
-                background: "rgba(35,230,242,0.10)",
-                borderColor: "rgba(35,230,242,0.50)",
-                color: "oklch(0.80 0.18 200)",
-                fontFamily: "Orbitron, sans-serif",
+                background: "oklch(0.92 0.05 265)",
+                borderColor: "oklch(0.72 0.14 265)",
+                color: "oklch(0.45 0.22 265)",
+                fontWeight: 600,
               }}
             >
               <div>General</div>
-              <div>Outside regular hours</div>
+              <div className="text-[10px] opacity-60">
+                Outside regular hours
+              </div>
             </div>
           )}
         </div>
@@ -737,12 +739,12 @@ export default function FaceScan() {
             className="mt-4 space-y-2"
             data-ocid="scan.manual_mode.panel"
           >
-            <h2 className="text-xs font-orbitron uppercase tracking-widest text-muted-foreground mb-2">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
               Select person to mark attendance:
             </h2>
             {persons.length === 0 ? (
               <div
-                className="text-center py-8 text-muted-foreground text-sm"
+                className="text-center py-10 text-muted-foreground text-sm"
                 data-ocid="scan.empty_state"
               >
                 No registered persons. Register someone first.
@@ -754,14 +756,17 @@ export default function FaceScan() {
                   <div
                     key={String(person.id)}
                     data-ocid={`scan.item.${idx + 1}`}
-                    className="flex items-center gap-3 p-3 rounded-xl hud-panel hover:border-primary/50 transition-colors"
+                    className="flex items-center gap-3 p-3.5 rounded-xl glass-card transition-all hover:shadow-lift"
                   >
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm font-orbitron"
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
                       style={{
-                        background: "rgba(35,230,242,0.12)",
-                        border: "1px solid rgba(35,230,242,0.35)",
-                        color: "oklch(0.80 0.18 200)",
+                        background: isStudent
+                          ? "oklch(0.92 0.05 265)"
+                          : "oklch(0.92 0.05 290)",
+                        color: isStudent
+                          ? "oklch(0.52 0.22 265)"
+                          : "oklch(0.58 0.20 290)",
                       }}
                     >
                       {person.name.charAt(0).toUpperCase()}
@@ -771,18 +776,16 @@ export default function FaceScan() {
                         {person.name}
                       </p>
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full font-medium font-orbitron uppercase tracking-wide"
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
                         style={
                           isStudent
                             ? {
-                                background: "rgba(35,230,242,0.10)",
-                                color: "oklch(0.80 0.18 200)",
-                                border: "1px solid rgba(35,230,242,0.25)",
+                                background: "oklch(0.92 0.05 265)",
+                                color: "oklch(0.52 0.22 265)",
                               }
                             : {
-                                background: "rgba(114,64,255,0.10)",
-                                color: "oklch(0.72 0.2 280)",
-                                border: "1px solid rgba(114,64,255,0.25)",
+                                background: "oklch(0.92 0.05 290)",
+                                color: "oklch(0.58 0.20 290)",
                               }
                         }
                       >
@@ -791,15 +794,14 @@ export default function FaceScan() {
                     </div>
                     <Button
                       size="sm"
-                      disabled={markingAttendance}
                       onClick={() => handleManualMark(person)}
-                      data-ocid="scan.mark_attendance.button"
-                      className="font-orbitron uppercase text-xs tracking-wider"
+                      disabled={markingAttendance}
+                      className="h-8 px-3 text-xs font-medium"
                       style={{
-                        background: "oklch(0.72 0.22 145)",
-                        color: "oklch(0.08 0.015 250)",
-                        boxShadow: "0 0 12px rgba(69,255,122,0.3)",
+                        background: "oklch(0.52 0.22 265)",
+                        color: "white",
                       }}
+                      data-ocid={`scan.mark_button.${idx + 1}`}
                     >
                       {markingAttendance ? (
                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -826,26 +828,31 @@ export default function FaceScan() {
           >
             {alreadyCheckedIn ? (
               <div
-                className="p-3 rounded-xl flex items-center gap-2 hud-panel"
-                style={{ borderColor: "rgba(69,255,122,0.30)" }}
+                className="p-3.5 rounded-xl flex items-center gap-2"
+                style={{
+                  background: "oklch(0.94 0.06 150)",
+                  border: "1px solid oklch(0.82 0.12 150)",
+                }}
                 data-ocid="scan.already_checked.success_state"
               >
-                <CheckCircle2 className="w-5 h-5 neon-text-green" />
+                <CheckCircle2
+                  className="w-5 h-5"
+                  style={{ color: "oklch(0.55 0.18 150)" }}
+                />
                 <span
-                  className="text-sm font-orbitron uppercase tracking-wide"
-                  style={{ color: "oklch(0.72 0.22 145)" }}
+                  className="text-sm font-semibold"
+                  style={{ color: "oklch(0.40 0.16 150)" }}
                 >
                   Already checked in for {slot} slot
                 </span>
               </div>
             ) : (
               <Button
-                className="w-full h-12 text-sm font-orbitron uppercase tracking-widest hud-glow-pulse"
+                className="w-full h-12 text-sm font-semibold"
                 style={{
-                  background: "oklch(0.72 0.22 145)",
-                  color: "oklch(0.08 0.015 250)",
-                  boxShadow: "0 0 24px rgba(69,255,122,0.35)",
-                  border: "1px solid rgba(69,255,122,0.5)",
+                  background: "oklch(0.52 0.22 265)",
+                  color: "white",
+                  boxShadow: "0 4px 16px oklch(0.52 0.22 265 / 0.40)",
                 }}
                 onClick={() => handleMarkAttendance()}
                 disabled={markingAttendance}
